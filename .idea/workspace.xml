@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="5caebdc4-71e0-4038-897e-3f655132f2f7" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/android/app/capacitor.build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/capacitor.build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/capacitor.settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/capacitor.settings.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/capacitor.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/capacitor.config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/exhibition/ExhibitionMap.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/exhibition/ExhibitionMap.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hooks/useRobotMQTT.ts" beforeDir="false" afterPath="$PROJECT_DIR$/hooks/useRobotMQTT.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/404.html" beforeDir="false" afterPath="$PROJECT_DIR$/out/404.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/__next.__PAGE__.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out/__next.__PAGE__.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/__next._full.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out/__next._full.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/__next._head.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out/__next._head.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/__next._index.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out/__next._index.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/__next._tree.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out/__next._tree.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/JPVzWx7TDwnpi9jsEqEav/_buildManifest.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/JPVzWx7TDwnpi9jsEqEav/_clientMiddlewareManifest.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/JPVzWx7TDwnpi9jsEqEav/_ssgManifest.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/chunks/1627bf2f54f2038d.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/chunks/2f236954d6a65e12.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/chunks/37106d0d9d7fdb1a.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/chunks/5ea6bb0f213b8adf.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/chunks/8a80e7184ad3a13f.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/chunks/9340e1d8acca117a.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/chunks/a54c4ba64f2f9a0d.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/chunks/a624b468970d3cc4.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/chunks/b4ee274e0e8b6db1.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/chunks/f2f58a7e93290fbb.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/chunks/turbopack-5ebadd1ad79b2be7.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/media/4fa387ec64143e14-s.c1fdd6c2.woff2" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/media/7178b3e590c64307-s.b97b3418.woff2" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/media/797e433ab948586e-s.p.dbea232f.woff2" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/media/8a480f0b521d4e75-s.8e0177b5.woff2" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/media/bbc41e54d2fcbd21-s.799d8ef8.woff2" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_next/static/media/caa3a2e1cccd8315-s.p.853070df.woff2" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_not-found.html" beforeDir="false" afterPath="$PROJECT_DIR$/out/_not-found.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_not-found.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out/_not-found.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_not-found/__next._full.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out/_not-found/__next._full.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_not-found/__next._head.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out/_not-found/__next._head.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_not-found/__next._index.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out/_not-found/__next._index.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_not-found/__next._not-found.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out/_not-found/__next._not-found.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_not-found/__next._not-found/__PAGE__.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out/_not-found/__next._not-found/__PAGE__.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/_not-found/__next._tree.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out/_not-found/__next._tree.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/out/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/index.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out/index.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 4
+}]]></component>
+  <component name="ProjectId" id="3DmwQ9ZCl10yViLl0iP8fU0Aogs" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "last_opened_file_path": "D:/Robot/ui-beta-1"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="5caebdc4-71e0-4038-897e-3f655132f2f7" name="Changes" comment="" />
+      <created>1778900533740</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1778900533740</updated>
+    </task>
+    <servers />
+  </component>
+</project>
