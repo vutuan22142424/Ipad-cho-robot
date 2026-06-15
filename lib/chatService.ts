@@ -1,65 +1,91 @@
 /**
  * chatService.ts
- * Kết nối ChatBot với Google Gemini API (streaming).
- * Fallback về câu trả lời hardcoded nếu API không khả dụng.
+ * Future Consumer Expo 2026 — Gemini streaming chat service
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { loadSchedule, fetchScheduleApi, type ScheduleItem } from './scheduleStore';
 
-/* ═══════════════════════════════════════════════════════════════
-   DỮ LIỆU TRIỂN LÃM — cung cấp context cho AI
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   DATA TRIỂN LÃM — tự điền thông tin thực tế vào đây
+   ═══════════════════════════════════════════════════════ */
 
-const EXHIBITION_INFO = {
-  name: 'Triển lãm Công nghệ & Robot 2026',
-  date: '15/03/2026',
-  location: 'Trung tâm Triển lãm Quốc tế',
+const EXPO_INFO = {
+  name: 'Future Consumer Expo 2026',
+  date: '15/06/2026',
+  location: 'Trung tâm Hội chợ & Triển lãm TP.HCM',
+
+  // ── Gian hàng — điền thông tin thực tế ──
   booths: [
-    { id: 'A1', name: 'AI & Robotics', desc: 'Trí tuệ nhân tạo & Robot' },
-    { id: 'A2', name: 'Smart Home', desc: 'Nhà thông minh IoT' },
-    { id: 'A3', name: 'Green Energy', desc: 'Năng lượng tái tạo' },
-    { id: 'B1', name: 'Semiconductor', desc: 'Chip & Bán dẫn' },
-    { id: 'B2', name: 'VR/AR Zone', desc: 'Thực tế ảo & Tăng cường' },
-    { id: 'B3', name: 'Drone Tech', desc: 'Công nghệ UAV' },
-    { id: 'C1', name: '3D Printing', desc: 'In 3D & Sản xuất' },
-    { id: 'C2', name: 'EV & Mobility', desc: 'Xe điện & Di chuyển' },
-    { id: 'C3', name: 'BioTech', desc: 'Công nghệ sinh học' },
-    { id: 'D1', name: 'FinTech', desc: 'Công nghệ tài chính' },
-    { id: 'D2', name: 'Cyber Security', desc: 'An ninh mạng' },
-    { id: 'D3', name: 'Space Tech', desc: 'Công nghệ vũ trụ' },
+    { id: 'R1', name: 'Coca-Cola',  desc: 'Đồ uống có gas, nước trái cây',        location: 'Phòng 1' },
+    { id: 'R2', name: 'Pepsi',      desc: 'Đồ uống có gas, trà, nước tăng lực',   location: 'Phòng 2' },
+    { id: 'R3', name: 'Heineken',   desc: 'Bia cao cấp nhập khẩu',                location: 'Phòng 3' },
+    { id: 'R4', name: 'Tiger',      desc: 'Bia Tiger, bia Larue, bia Bia Việt',   location: 'Phòng 4' },
+    { id: 'R5', name: 'Sabeco',     desc: 'Bia Sài Gòn, bia 333',                 location: 'Phòng 5' },
+    { id: 'R6', name: 'Abbott',     desc: 'Dinh dưỡng y tế, sữa công thức',       location: 'Phòng 6' },
+    { id: 'R7', name: 'Nutifood',   desc: 'Sữa, thực phẩm dinh dưỡng Việt Nam',  location: 'Phòng 7' },
+    { id: 'R8', name: 'Vinamilk',   desc: 'Sữa tươi, sữa chua, phô mai',         location: 'Phòng 8' },
   ],
+
+  // ── Lịch trình — điền lịch thực tế ──
+  schedule: [
+    { time: '08:00', end: '08:30', label: 'Đón tiếp & Đăng ký',       location: 'Sảnh chính' },
+    { time: '08:30', end: '09:00', label: 'Lễ khai mạc',              location: 'Hội trường chính' },
+    { time: '09:00', end: '10:30', label: 'Keynote: Tương lai ngành tiêu dùng', location: 'Hội trường chính' },
+    { time: '10:30', end: '11:00', label: 'Giải lao & Networking',     location: 'Sảnh kết nối' },
+    { time: '11:00', end: '12:00', label: 'Tham quan gian hàng',       location: 'Khu triển lãm' },
+    { time: '12:00', end: '13:00', label: 'Bữa trưa',                  location: 'Khu ăn uống' },
+    { time: '13:00', end: '14:30', label: 'Hội thảo: Xu hướng 2026',  location: 'Hội trường chính' },
+    { time: '14:30', end: '15:30', label: 'Demo sản phẩm mới',         location: 'Sân khấu trung tâm' },
+    { time: '15:30', end: '16:00', label: 'Giải lao',                  location: 'Sảnh kết nối' },
+    { time: '16:00', end: '17:30', label: 'Tọa đàm: Đổi mới sáng tạo', location: 'Hội trường chính' },
+    { time: '17:30', end: '18:30', label: 'Lễ trao giải',              location: 'Sân khấu trung tâm' },
+    { time: '18:30', end: '19:00', label: 'Bế mạc & Tiệc chia tay',   location: 'Sảnh chính' },
+  ],
+
+  // ── Tiện ích ──
   facilities: {
-    restrooms: ['Góc trái sảnh chính (Tầng 1, gần lối vào)', 'Cuối hành lang khu B (Tầng 1)'],
-    foodArea: 'Nhà hàng • Tầng 4',
-    entrance: 'Cổng chính phía Nam',
-    infoDesk: 'Sảnh chính, gần lối vào',
+    restroom: 'Góc trái bản đồ, gần lối vào chính',
+    food:     'Khu ăn uống — cuối hành lang khu B',
+    parking:  'Bãi đỗ xe tầng hầm B1',
+    wifi:     'Tên mạng: FutureExpo2026 | Mật khẩu: expo2026',
+    info:     'Quầy thông tin — Sảnh chính, gần lối vào',
   },
-  robots: [
-    { name: 'RoboMarket X1', desc: 'Robot tiếp thị tự động – phát catalogue, đồ ăn nhẹ, đồ uống' },
-    { name: 'AIGuide Pro', desc: 'Robot hướng dẫn thông minh' },
-    { name: 'SmartServe 3.0', desc: 'Robot phục vụ sự kiện' },
-  ],
+
+  // ── Robot phục vụ ──
+  robot: {
+    name: 'TTH-T1',
+    desc: 'Robot tiếp thị tự động — phát đồ uống, đồ ăn nhẹ, catalogue cho khách tham quan',
+    drawers: [
+      { id: 1, name: 'Đồ uống',    desc: 'Nước uống miễn phí cho khách' },
+      { id: 2, name: 'Đồ ăn nhẹ', desc: 'Snack, bánh kẹo miễn phí' },
+      { id: 3, name: 'Catalogue',  desc: 'Tài liệu giới thiệu các gian hàng' },
+    ],
+  },
 };
 
-/* ═══════════════════════════════════════════════════════════════
-   TẠO SYSTEM PROMPT
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   SYSTEM PROMPT
+   ═══════════════════════════════════════════════════════ */
 
-function buildSystemPrompt(schedule: ScheduleItem[]): string {
-  const scheduleText = schedule.length > 0
-    ? schedule.map(s => `• ${s.time}–${s.end}: ${s.label} (${s.detail}${s.speaker ? ', ' + s.speaker : ''})`).join('\n')
-    : 'Chưa có lịch trình.';
-
-  const boothText = EXHIBITION_INFO.booths
-    .map(b => `• Gian hàng ${b.id}: ${b.name} – ${b.desc}`)
+function buildSystemPrompt(): string {
+  const boothText = EXPO_INFO.booths
+    .map(b => `• ${b.name} (${b.location}): ${b.desc}`)
     .join('\n');
 
-  return `Bạn là trợ lý AI thân thiện của Robot Tiếp Thị tại "${EXHIBITION_INFO.name}".
+  const scheduleText = EXPO_INFO.schedule
+    .map(s => `• ${s.time}–${s.end}: ${s.label} — ${s.location}`)
+    .join('\n');
+
+  const drawerText = EXPO_INFO.robot.drawers
+    .map(d => `• Ngăn ${d.id} — ${d.name}: ${d.desc}`)
+    .join('\n');
+
+  return `Bạn là trợ lý AI thân thiện của robot ${EXPO_INFO.robot.name} tại "${EXPO_INFO.name}".
 
 THÔNG TIN SỰ KIỆN:
-- Ngày: ${EXHIBITION_INFO.date}
-- Địa điểm: ${EXHIBITION_INFO.location}
+- Tên: ${EXPO_INFO.name}
+- Ngày: ${EXPO_INFO.date}
+- Địa điểm: ${EXPO_INFO.location}
 
 CÁC GIAN HÀNG:
 ${boothText}
@@ -68,93 +94,63 @@ LỊCH TRÌNH HÔM NAY:
 ${scheduleText}
 
 TIỆN ÍCH:
-- Nhà vệ sinh: ${EXHIBITION_INFO.facilities.restrooms.join('; ')}
-- Khu ăn uống: ${EXHIBITION_INFO.facilities.foodArea}
-- Lối vào: ${EXHIBITION_INFO.facilities.entrance}
-- Quầy thông tin: ${EXHIBITION_INFO.facilities.infoDesk}
+- Nhà vệ sinh: ${EXPO_INFO.facilities.restroom}
+- Khu ăn uống: ${EXPO_INFO.facilities.food}
+- Đỗ xe: ${EXPO_INFO.facilities.parking}
+- WiFi: ${EXPO_INFO.facilities.wifi}
+- Quầy thông tin: ${EXPO_INFO.facilities.info}
 
-SẢN PHẨM ROBOT:
-${EXHIBITION_INFO.robots.map(r => `• ${r.name}: ${r.desc}`).join('\n')}
+ROBOT TTH-T1:
+${EXPO_INFO.robot.desc}
+${drawerText}
+(Khách có thể chạm vào ngăn trên màn hình để nhận đồ)
 
-QUY TẮC:
-- Luôn trả lời bằng tiếng Việt, ngắn gọn, thân thiện
-- Dùng emoji phù hợp để sinh động hơn
-- Nếu không chắc chắn, hướng dẫn khách đến quầy thông tin
+QUY TẮC TRẢ LỜI:
+- Luôn trả lời bằng tiếng Việt, ngắn gọn, thân thiện, dùng emoji phù hợp
+- Tối đa 3-4 câu mỗi câu hỏi, trừ khi cần liệt kê
+- Nếu không chắc, hướng khách đến quầy thông tin
 - Không bịa thông tin ngoài dữ liệu được cung cấp
-- Trả lời tối đa 3-4 câu cho mỗi câu hỏi, trừ khi cần liệt kê chi tiết
-- TUYỆT ĐỐI GIỮ NGUYÊN tên sự kiện trong lịch trình (ví dụ: nếu có chữ "Lễ khai quốc", phải in ra y hệt, không được tự ý sửa thành "Lễ khai mạc").`;
+- Với câu hỏi mở không liên quan triển lãm, trả lời ngắn gọn và lịch sự`;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   GEMINI STREAMING CHAT
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   TYPES
+   ═══════════════════════════════════════════════════════ */
 
 export interface ChatMessage {
   type: 'user' | 'assistant';
   text: string;
 }
-// Model: gemini-2.5-flash
+
+/* ═══════════════════════════════════════════════════════
+   GEMINI STREAMING
+   ═══════════════════════════════════════════════════════ */
+
 const GEMINI_MODEL = 'gemini-2.5-flash';
 
-// ── Rate limit cooldown: sau khi bị 429, skip API trong 30 giây ──
+// Rate limit cooldown sau khi bị 429
 let rateLimitUntil = 0;
-const COOLDOWN_MS = 30_000; // 30 giây
+const COOLDOWN_MS = 30_000;
 
-// ── Cache lịch trình trong bộ nhớ để tránh bị 429 từ MockAPI khi chat liên tục ──
-let cachedSchedule: ScheduleItem[] | null = null;
-let lastScheduleFetch = 0;
-const SCHEDULE_CACHE_MS = 60_000; // Cache 1 phút
-
-/**
- * Gọi Gemini API với streaming.
- * Tự động skip nếu đang trong cooldown period (sau 429).
- */
 export async function* streamChat(
   history: ChatMessage[],
   userMessage: string,
 ): AsyncGenerator<string> {
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-  if (!apiKey) {
-    console.error('[ChatBot] ❌ NEXT_PUBLIC_GEMINI_API_KEY chưa được cấu hình!');
-    throw new Error('NO_API_KEY');
-  }
+  if (!apiKey) throw new Error('NO_API_KEY');
 
-  // Nếu đang trong cooldown period → skip API, dùng fallback ngay
+  // Đang trong cooldown → dùng fallback
   const now = Date.now();
-  if (now < rateLimitUntil) {
-    const remaining = Math.ceil((rateLimitUntil - now) / 1000);
-    console.log(`[ChatBot] ⏳ Đang cooldown (còn ${remaining}s) → dùng fallback`);
-    throw new Error('RATE_LIMIT_COOLDOWN');
-  }
+  if (now < rateLimitUntil) throw new Error('RATE_LIMIT_COOLDOWN');
 
   const genAI = new GoogleGenerativeAI(apiKey);
-
-  let schedule: ScheduleItem[] = [];
-  // Ưu tiên dùng cache trong 1 phút để không bị MockAPI khoá API (429) do spam request
-  if (cachedSchedule && now - lastScheduleFetch < SCHEDULE_CACHE_MS) {
-    schedule = cachedSchedule;
-  } else {
-    schedule = await fetchScheduleApi();
-    if (schedule && schedule.length > 0) {
-      cachedSchedule = schedule;
-      lastScheduleFetch = now;
-    } else {
-      // Fallback về localStorage nếu MockAPI bị lỗi
-      schedule = loadSchedule();
-    }
-  }
-
   const model = genAI.getGenerativeModel({
     model: GEMINI_MODEL,
-    systemInstruction: buildSystemPrompt(schedule),
-    generationConfig: {
-      maxOutputTokens: 2048,
-      temperature: 0.7,
-    },
+    systemInstruction: buildSystemPrompt(),
+    generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
   });
 
-  // Chuẩn bị history cho Gemini
-  // Bỏ các message 'assistant' (model) ở đầu — ví dụ lời chào mặc định
+  // Bỏ assistant message đầu tiên (lời chào mặc định)
   const filtered = history.filter(m => m.text.trim());
   let startIdx = 0;
   while (startIdx < filtered.length && filtered[startIdx].type === 'assistant') {
@@ -168,89 +164,70 @@ export async function* streamChat(
   try {
     const chat = model.startChat({ history: geminiHistory });
     const result = await chat.sendMessageStream(userMessage);
-
     for await (const chunk of result.stream) {
       const text = chunk.text();
-      if (text) {
-        console.log(`[ChatBot] ✅ Gemini trả lời thành công!`);
-        yield text;
-      }
+      if (text) yield text;
     }
-    return;
   } catch (err: any) {
-    const is429 = err?.message?.includes('429') || err?.status === 429;
-    if (is429) {
+    if (err?.message?.includes('429') || err?.status === 429) {
       rateLimitUntil = Date.now() + COOLDOWN_MS;
-      console.warn(`[ChatBot] ⚠️ Rate limited! Cooldown 60s → dùng fallback`);
-    } else {
-      console.warn(`[ChatBot] ❌ Gemini lỗi:`, err?.message || err);
     }
     throw err;
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   FALLBACK RESPONSES — dùng khi không có API key hoặc API lỗi
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   FALLBACK — khi không có API hoặc bị rate limit
+   ═══════════════════════════════════════════════════════ */
 
-const FALLBACK_RESPONSES: [string[], string][] = [
-  // Chào hỏi
-  [['xin chào', 'xin chao', 'hello', 'hi', 'chào', 'chao', 'hey'],
-    'Xin chào! 👋 Rất vui được gặp bạn tại Triển lãm Công nghệ & Robot 2026! Tôi có thể giúp bạn tìm đường, xem lịch trình, hoặc giới thiệu sản phẩm. Bạn cần gì không? 😊'],
-  // Cảm ơn
-  [['cảm ơn', 'cam on', 'thanks', 'thank'],
-    'Không có gì! 😊 Rất vui khi được hỗ trợ bạn. Nếu cần gì thêm, cứ hỏi nhé!'],
-  // Nhà vệ sinh
-  [['nhà vệ sinh', 'nha ve sinh', 'toilet', 'wc', 'vệ sinh', 've sinh'],
-    'Nhà vệ sinh có 2 vị trí:\n🚻 Góc trái sảnh chính (Tầng 1, gần lối vào)\n🚻 Cuối hành lang khu B (Tầng 1)'],
-  // Robot / Sản phẩm
-  [['robot', 'sản phẩm', 'product'],
-    'Chúng tôi đang trưng bày:\n🤖 RoboMarket X1 – Robot tiếp thị tự động\n🤖 AIGuide Pro – Robot hướng dẫn thông minh\n🤖 SmartServe 3.0 – Robot phục vụ sự kiện\nBạn muốn biết thêm về sản phẩm nào?'],
-  // Sơ đồ / Gian hàng
-  [['sơ đồ', 'gian hàng', 'booth', 'khu', 'map', 'bản đồ'],
-    'Sơ đồ triển lãm gồm 12 gian hàng:\n• Khu A: AI & Robotics, Smart Home, Green Energy\n• Khu B: Semiconductor, VR/AR, Drone Tech\n• Khu C: 3D Printing, EV & Mobility, BioTech\n• Khu D: FinTech, Cyber Security, Space Tech\n📍 Bạn có thể xem trực tiếp trên bản đồ!'],
-  // Ăn uống
-  [['ăn', 'uống', 'food', 'drink', 'đói', 'khát', 'nhà hàng', 'canteen', 'ăn uống'],
-    'Khu ăn uống:\n🍽️ Nhà hàng chính: Tầng 4\n☕ Khu giải khát: Sảnh kết nối (Khu B)\n🍰 Đồ ăn nhẹ: Robot RoboMarket X1 có thể phục vụ!'],
-  // WiFi
-  [['wifi', 'internet', 'mạng', 'password', 'pass wifi'],
-    'WiFi miễn phí:\n📶 Tên mạng: TechExpo2026\n🔑 Mật khẩu: robot2026\nKết nối khắp khu triển lãm!'],
-  // Lối vào / Parking
-  [['lối vào', 'entrance', 'đỗ xe', 'parking', 'ra vào', 'gửi xe'],
-    'Lối vào chính: Cổng phía Nam\n🚗 Bãi đỗ xe: Tầng hầm B1-B2 (miễn phí)\n🚌 Xe buýt: Trạm dừng ngay cổng chính'],
-  // Hỗ trợ / Thông tin
-  [['hỗ trợ', 'help', 'thông tin', 'info', 'liên hệ', 'quầy thông tin'],
-    'Quầy thông tin:\n📍 Sảnh chính, gần lối vào (Tầng 1)\n📞 Hotline: 1900-xxxx\nNhân viên hỗ trợ sẵn sàng giúp đỡ bạn! 😊'],
-  // AI / Công nghệ
-  [['trí tuệ nhân tạo', 'công nghệ', 'technology', 'tech'],
-    'Gian hàng AI & Công nghệ nổi bật:\n🤖 A1: AI & Robotics – Trí tuệ nhân tạo\n🥽 B2: VR/AR Zone – Thực tế ảo\n💎 B1: Semiconductor – Chip & Bán dẫn\n🚀 D3: Space Tech – Công nghệ vũ trụ'],
-  // Giờ giấc
-  [['mấy giờ', 'giờ mở', 'giờ đóng', 'khi nào', 'bao giờ', 'thời gian'],
-    'Triển lãm diễn ra từ 08:00 – 20:00 ngày 15/03/2026\n🎯 Sự kiện chính: 09:00 – 18:30\n🎉 Tiệc chia tay: 19:30 – 20:00'],
+const FALLBACKS: [string[], string][] = [
+  [['xin chào', 'hello', 'hi', 'chào', 'hey'],
+    'Xin chào! 👋 Chào mừng bạn đến với Future Consumer Expo 2026! Tôi có thể giúp bạn tìm gian hàng, xem lịch trình, hoặc nhận đồ uống miễn phí. Bạn cần gì không? 😊'],
+
+  [['cảm ơn', 'thanks', 'thank'],
+    'Không có gì! 😊 Rất vui được hỗ trợ bạn. Nếu cần gì thêm cứ hỏi nhé!'],
+
+  [['nhà vệ sinh', 'toilet', 'wc', 'vệ sinh'],
+    `🚻 Nhà vệ sinh nằm ở góc trái bản đồ, gần lối vào chính. Bạn có thể xem vị trí trên bản đồ màn hình chính!`],
+
+  [['lịch trình', 'sự kiện', 'hôm nay', 'schedule', 'chương trình'],
+    `📅 Lịch trình hôm nay:\n${EXPO_INFO.schedule.slice(0, 5).map(s => `• ${s.time}: ${s.label}`).join('\n')}\n...và nhiều hơn nữa! Xem đầy đủ tại quầy thông tin.`],
+
+  [['gian hàng', 'booth', 'sơ đồ', 'ở đâu', 'map'],
+    `🗺️ Các gian hàng tại triển lãm:\n${EXPO_INFO.booths.map(b => `• ${b.name} — ${b.location}`).join('\n')}`],
+
+  [['đồ uống', 'nước', 'drink', 'uống'],
+    '🥤 Bạn có thể chạm vào ngăn ĐỒ UỐNG trên màn hình bên phải để nhận đồ uống miễn phí từ robot TTH-T1!'],
+
+  [['đồ ăn', 'ăn nhẹ', 'snack', 'bánh'],
+    '🍪 Chạm vào ngăn ĐỒ ĂN NHẸ trên màn hình để nhận snack miễn phí từ robot TTH-T1!'],
+
+  [['catalogue', 'tài liệu', 'brochure'],
+    '📄 Chạm vào ngăn CATALOGUE trên màn hình để nhận tài liệu giới thiệu các gian hàng!'],
+
+  [['wifi', 'internet', 'mạng'],
+    `📶 WiFi miễn phí:\n• Tên mạng: FutureExpo2026\n• Mật khẩu: expo2026`],
+
+  [['đỗ xe', 'parking', 'gửi xe', 'xe'],
+    '🚗 Bãi đỗ xe miễn phí tại tầng hầm B1. Lối vào từ cổng chính phía Nam.'],
+
+  [['robot', 'tth', 'ttht1'],
+    `🤖 Tôi là robot TTH-T1 — robot tiếp thị tự động tại ${EXPO_INFO.name}!\nTôi có thể phát đồ uống, đồ ăn nhẹ và catalogue cho bạn. Chỉ cần chạm vào các ngăn trên màn hình!`],
+
+  [['coca', 'cocacola', 'pepsi', 'heineken', 'tiger', 'sabeco', 'bia'],
+    '🍺 Các thương hiệu đồ uống tại triển lãm: Coca-Cola (Phòng 1), Pepsi (Phòng 2), Heineken (Phòng 3), Tiger (Phòng 4), Sabeco (Phòng 5). Hãy ghé thăm để trải nghiệm sản phẩm mới nhất!'],
+
+  [['abbott', 'nutifood', 'vinamilk', 'sữa'],
+    '🥛 Các thương hiệu dinh dưỡng tại triển lãm: Abbott (Phòng 6), Nutifood (Phòng 7), Vinamilk (Phòng 8). Nhiều sản phẩm mới đang được giới thiệu!'],
+
+  [['thông tin', 'help', 'hỗ trợ', 'liên hệ'],
+    `ℹ️ Quầy thông tin đặt tại sảnh chính, gần lối vào. Nhân viên luôn sẵn sàng hỗ trợ bạn! 😊`],
 ];
 
 export function getFallbackResponse(text: string): string {
   const lower = text.toLowerCase();
-
-  // Kiểm tra lịch trình (ưu tiên cao — dùng dữ liệu thật từ scheduleStore)
-  if (lower.includes('lịch trình') || lower.includes('sự kiện') || lower.includes('hôm nay')
-    || lower.includes('schedule') || lower.includes('event') || lower.includes('giờ chiều')
-    || lower.includes('giờ sáng') || lower.includes('tiếp theo')) {
-    const schedule = loadSchedule();
-    if (schedule.length > 0) {
-      return '📅 Lịch trình hôm nay:\n' + schedule.map(s => `• ${s.time}–${s.end}: ${s.label}`).join('\n');
-    }
-    return 'Hiện tại chưa có lịch trình nào được cập nhật.';
+  for (const [keywords, response] of FALLBACKS) {
+    if (keywords.some(k => lower.includes(k))) return response;
   }
-
-  // Tìm keyword khớp trong danh sách fallback
-  // Chống lỗi match chuỗi con (vd: "hi" trong "hiện đại", "ai" trong "lại")
-  for (const [keywords, response] of FALLBACK_RESPONSES) {
-    if (keywords.some(k => {
-      const regex = new RegExp(`(?:^|\\s|[.,!?])` + k + `(?:$|\\s|[.,!?])`, 'i');
-      return regex.test(lower);
-    })) return response;
-  }
-
-  return 'Xin lỗi, hiện tại hệ thống AI đang bị quá tải (vượt quá số lượng câu hỏi miễn phí của Google). Bạn vui lòng chờ khoảng 1 phút rồi thử lại, hoặc đến Quầy thông tin để được hỗ trợ trực tiếp nhé! 😊';
+  return 'Xin lỗi, hệ thống AI đang tạm thời quá tải. Vui lòng thử lại sau ít phút, hoặc đến quầy thông tin tại sảnh chính để được hỗ trợ trực tiếp! 😊';
 }
