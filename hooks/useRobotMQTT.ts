@@ -80,8 +80,8 @@ async function initMQTT() {
   isInitialized = true;
   // const brokerUrl = process.env.NEXT_PUBLIC_MQTT_BROKER 
   // ?? 'wss://b85b204370d243129a46f5b35f9db2a9.s1.eu.hivemq.cloud:8884/mqtt';
-  const brokerUrl = 'ws://localhost:9001';
-  // const brokerUrl = 'ws://192.168.4.1:9001'; // pi5
+  // const brokerUrl = 'ws://localhost:9001';
+  const brokerUrl = 'ws://192.168.4.1:9001'; // pi5
   //  const brokerUrl = 'ws://172.24.36.100:9001';
 client = mqtt.connect(brokerUrl, {
       username: process.env.NEXT_PUBLIC_MQTT_USER ?? 'Tuandang',
