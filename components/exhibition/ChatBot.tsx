@@ -29,7 +29,7 @@ const SUGGESTIONS = [
 ];
 
 /* ═══════════════════════════════════════════════════════
-   TYPING INDICATOR
+   TYPING INDICATOR // tạo cảm giác AI đang xử lý
    ═══════════════════════════════════════════════════════ */
 
 function TypingIndicator() {
@@ -53,11 +53,11 @@ function TypingIndicator() {
    VOICE OVERLAY
    ═══════════════════════════════════════════════════════ */
 
-function isCapacitorNative(): boolean {
+function isCapacitorNative(): boolean {    // đang chạy trên app Android/iOS?
   try { return Capacitor.isNativePlatform(); } catch { return false; }
 }
 
-function hasWebSpeechAPI(): boolean {
+function hasWebSpeechAPI(): boolean { // browser có hỗ trợ nhận dạng giọng nói?
   try {
     return !!(typeof window !== 'undefined' &&
       ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition));
@@ -94,7 +94,7 @@ function VoiceOverlay({ onClose, onResult }: { onClose: () => void; onResult: (t
     }
   }, [onClose, onResult]);
 
-  const startWebRecognition = useCallback(() => {
+  const startWebRecognition = useCallback(() => {  // dùng API có sẵn của Chrome/Safari
     if (!hasWebSpeechAPI()) {
       setStatus('unsupported');
       setErrorMsg('Trình duyệt không hỗ trợ nhận dạng giọng nói.');
@@ -136,7 +136,7 @@ function VoiceOverlay({ onClose, onResult }: { onClose: () => void; onResult: (t
     }
   }, [onClose, stopAndSend]);
 
-  const startCapacitorRecognition = useCallback(async () => {
+  const startCapacitorRecognition = useCallback(async () => { //  dùng plugin native cho Android/iOS, mạnh hơn, chính xác hơn
     try {
       const { SpeechRecognition } = await import('@capacitor-community/speech-recognition');
       const { available } = await SpeechRecognition.available();
