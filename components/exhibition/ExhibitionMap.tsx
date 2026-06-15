@@ -323,7 +323,7 @@ export function ExhibitionMap() {
           ctx.drawImage(   //// vẽ ảnh bản đồ
             mapImageRef.current,
             0,
-            0,
+            0,    
             MAP_W,
             MAP_H
           );}
@@ -525,9 +525,21 @@ export function ExhibitionMap() {
       publishCommand('robot/cmd/pause', {}); forceSetPausedManual(); setIsManualPaused(true); setManualPaused(true);
     }
   };
-  const cancelNav = () => publishCommand('robot/cmd/cancel_request', { command_id: '*' });
+  const cancelNav = () => {
+  if (!window.confirm('Bạn có chắc muốn huỷ toàn bộ lộ trình không?')) return;
+  publishCommand('robot/cmd/cancel_request', { command_id: '*' });
+  setNavStatus('idle');
+  setRouteQueue([]);
+  setGoalPos(null);
+  setGoalRos(null);
+  setSelectedBooth(null);
+  setIsManualPaused(false);
+  setNavMessage('');
+  setManualPaused(false);
+};
 
   const addToRoute = (booth: typeof BOOTHS[0]) => {
+    if (isNavActive) return;
     if (!isModalOpen) setIsModalOpen(true);
     setRouteQueue(prev => {
       if (prev[prev.length - 1]?.boothId === booth.id) return prev;
@@ -592,6 +604,7 @@ export function ExhibitionMap() {
                   {BOOTHS.map(b => (
                     <button key={b.id}
                       onClick={() => { addToRoute(b); setShowBoothList(false); }}
+                      disabled={isNavActive}
                       className={`px-2 py-2 rounded-lg text-left transition-all active:scale-95 border ${selectedBooth === b.id ? 'bg-white/10 border-white/20' : 'bg-white/[0.03] border-transparent hover:bg-white/[0.06]'}`}>
                       <div className="flex items-center gap-1 mb-0.5">
                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: b.color, boxShadow: `0 0 4px ${b.color}` }} />
@@ -723,7 +736,7 @@ export function ExhibitionMap() {
                   {isManualPaused ? '▶ Tiếp tục' : '⏸ Tạm dừng'}
                 </button>
                 <button onClick={cancelNav}
-                  className="flex-1 py-3.5 rounded-xl text-[13px] font-bold text-red-300 bg-red-500/15 hover:bg-red-500/25 border border-red-500/25 transition-all flex items-center justify-center gap-1.5">
+                  className="flex-1 py-3.5 rounded-xl text-[13px] font-bold text-white bg-red-600 hover:bg-red-500 active:bg-red-700 transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-red-600/30">
                   <RotateCcw className="w-4 h-4" /> Huỷ lộ trình
                 </button>
               </div>
