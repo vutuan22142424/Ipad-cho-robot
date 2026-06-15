@@ -291,7 +291,7 @@ export function ExhibitionMap() {
 
             useEffect(() => {
               const img = new Image();
-              img.src = '/picture1.png';
+              img.src = '/Picture1.png';
 
               img.onload = () => {
                 mapImageRef.current = img;
