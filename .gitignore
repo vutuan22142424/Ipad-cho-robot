@@ -11,3 +11,6 @@ node_modules/
 
 # Capacitor / Android build
 android/
+
+# Build output
+out/
