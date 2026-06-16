@@ -137,6 +137,7 @@ export async function* streamChat(
   userMessage: string,
 ): AsyncGenerator<string> {
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+  console.log('apiKey =', apiKey);
   if (!apiKey) throw new Error('NO_API_KEY');
 
   // Đang trong cooldown → dùng fallback
