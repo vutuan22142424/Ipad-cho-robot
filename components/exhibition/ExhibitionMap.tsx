@@ -335,69 +335,92 @@ export function ExhibitionMap() {
     }
   }, [feedback]);
 
-         const lastTouchDist = useRef<number | null>(null);
+              const lastTouchDist = useRef<number | null>(null);
+              const lastPinchCenter = useRef<{ x: number; y: number } | null>(null);
 
-        const handleDown = (e: React.MouseEvent | React.TouchEvent) => {
-          if ('touches' in e) {
-            if (e.touches.length === 2) {
-              // Bắt đầu pinch — reset dist
-              const dx = e.touches[0].clientX - e.touches[1].clientX;
-              const dy = e.touches[0].clientY - e.touches[1].clientY;
-              lastTouchDist.current = Math.hypot(dx, dy);
-              return;
-            }
-            const cx = e.touches[0].clientX;
-            const cy = e.touches[0].clientY;
-            isDraggingRef.current = false;
-            setIsDragging(false);
-            clickOrigin.current = { x: cx, y: cy };
-            dragStart.current = { x: cx - offset.x, y: cy - offset.y };
-          } else {
-            isDraggingRef.current = false;
-            setIsDragging(false);
-            clickOrigin.current = { x: e.clientX, y: e.clientY };
-            dragStart.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
-          }
-        };
+              const handleDown = (e: React.MouseEvent | React.TouchEvent) => {
+                if ('touches' in e) {
+                  if (e.touches.length === 2) {
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    lastTouchDist.current = Math.hypot(dx, dy);
+                    // ← Lưu điểm giữa 2 ngón
+                    lastPinchCenter.current = {
+                      x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+                      y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+                    };
+                    return;
+                  }
+                  const cx = e.touches[0].clientX;
+                  const cy = e.touches[0].clientY;
+                  isDraggingRef.current = false;
+                  setIsDragging(false);
+                  clickOrigin.current = { x: cx, y: cy };
+                  dragStart.current = { x: cx - offset.x, y: cy - offset.y };
+                } else {
+                  isDraggingRef.current = false;
+                  setIsDragging(false);
+                  clickOrigin.current = { x: e.clientX, y: e.clientY };
+                  dragStart.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
+                }
+              };
 
-        const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
-          if ('touches' in e) {
-            // Pinch zoom — 2 ngón tay
-            if (e.touches.length === 2) {
-              const dx = e.touches[0].clientX - e.touches[1].clientX;
-              const dy = e.touches[0].clientY - e.touches[1].clientY;
-              const dist = Math.hypot(dx, dy);
-              if (lastTouchDist.current !== null) {
-                const delta = dist - lastTouchDist.current;
-                setScale(s => Math.min(Math.max(0.1, s + delta * 0.005), 2));
-              }
-              lastTouchDist.current = dist;
-              return;
-            }
-            // Pan — 1 ngón tay
-            const cx = e.touches[0].clientX;
-            const cy = e.touches[0].clientY;
-            if (Math.hypot(cx - clickOrigin.current.x, cy - clickOrigin.current.y) > 5) {
-              isDraggingRef.current = true;
-              setIsDragging(true);
-              setOffset({ x: cx - dragStart.current.x, y: cy - dragStart.current.y });
-            }
-          } else {
-            if (e.buttons !== 1) return;
-            const cx = e.clientX;
-            const cy = e.clientY;
-            if (Math.hypot(cx - clickOrigin.current.x, cy - clickOrigin.current.y) > 5) {
-              isDraggingRef.current = true;
-              setIsDragging(true);
-              setOffset({ x: cx - dragStart.current.x, y: cy - dragStart.current.y });
-            }
-          }
-        };
+              const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
+                if ('touches' in e) {
+                  if (e.touches.length === 2) {
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    const dist = Math.hypot(dx, dy);
 
-        const handleUp = () => {
-          lastTouchDist.current = null;
-          setTimeout(() => { isDraggingRef.current = false; setIsDragging(false); }, 80);
-        };
+                    // Điểm giữa 2 ngón hiện tại
+                    const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                    const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+                    if (lastTouchDist.current !== null && lastPinchCenter.current !== null) {
+                      const ratio = dist / lastTouchDist.current;
+
+                      // Zoom tại điểm giữa 2 ngón
+                      setScale(prev => {
+                        const newScale = Math.min(Math.max(0.1, prev * ratio), 2);
+                        // Điều chỉnh offset để zoom vào đúng điểm giữa
+                        setOffset(prevOffset => ({
+                          x: centerX - (centerX - prevOffset.x) * (newScale / prev),
+                          y: centerY - (centerY - prevOffset.y) * (newScale / prev),
+                        }));
+                        return newScale;
+                      });
+                    }
+
+                    lastTouchDist.current = dist;
+                    lastPinchCenter.current = { x: centerX, y: centerY };
+                    return;
+                  }
+
+                  // Pan — 1 ngón tay
+                  const cx = e.touches[0].clientX;
+                  const cy = e.touches[0].clientY;
+                  if (Math.hypot(cx - clickOrigin.current.x, cy - clickOrigin.current.y) > 5) {
+                    isDraggingRef.current = true;
+                    setIsDragging(true);
+                    setOffset({ x: cx - dragStart.current.x, y: cy - dragStart.current.y });
+                  }
+                } else {
+                  if (e.buttons !== 1) return;
+                  const cx = e.clientX;
+                  const cy = e.clientY;
+                  if (Math.hypot(cx - clickOrigin.current.x, cy - clickOrigin.current.y) > 5) {
+                    isDraggingRef.current = true;
+                    setIsDragging(true);
+                    setOffset({ x: cx - dragStart.current.x, y: cy - dragStart.current.y });
+                  }
+                }
+              };
+
+              const handleUp = () => {
+                lastTouchDist.current = null;
+                lastPinchCenter.current = null;
+                setTimeout(() => { isDraggingRef.current = false; setIsDragging(false); }, 80);
+              };
   const startRoute = useCallback(() => {
     const queue = routeQueueRef.current;
     if (queue.length === 0) return;

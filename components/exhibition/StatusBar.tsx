@@ -47,7 +47,7 @@ export function StatusBar() {
           </div>
           <div className="leading-none">
             <span className="text-xs font-bold text-foreground">Robot Tiếp Thị</span>
-            <span className="text-xs text-muted-foreground ml-1">· Triển Lãm 2026</span>
+            <span className="text-xs text-muted-foreground ml-1">· Future Consumer Expo 2026</span>
           </div>
         </div>
 

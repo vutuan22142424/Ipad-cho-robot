@@ -10,9 +10,9 @@ function rgba(hex: string, alpha: number): string { // chuyển từ hex sang rg
 }
 
 const DRAWERS = [
-  { id: 1, name: 'ĐỒ UỐNG',   color: '#f85b00', top: '56%', left: '12%',   right: '15%' },
-  { id: 2, name: 'ĐỒ ĂN NHẸ', color: '#00ff33', top: '40%', left: '13%',   right: '16%' },
-  { id: 3, name: 'CATALOGUE',  color: '#4c00fe', top: '23%', left: '13.5%', right: '16%' },
+  { id: 1, name: 'ĐỒ UỐNG',   color: '#f85b00', top: '56%', left: '12%',   right: '15%', disabled: false },
+  { id: 2, name: 'ĐỒ ĂN NHẸ', color: '#00ff33', top: '40%', left: '13%',   right: '16%', disabled: false },
+  { id: 3, name: 'CATALOGUE',  color: '#4c00fe', top: '23%', left: '13.5%', right: '16%', disabled: true },
 ];
 
 export function RobotInventory() {
@@ -98,6 +98,8 @@ export function RobotInventory() {
   }, [handleClosed]);
 
   const toggleDrawer = (id: number) => {  // hàm mở ngăn
+      const drawer = DRAWERS.find(d => d.id === id);
+    if (drawer?.disabled) return; //
     if (openDrawerRef.current === id) return; // đã mở ngăn rồi, ko mở nữa
     // Không cho mở ngăn khi đang JAM
     if (drawerJamStatus !== 'ok') return;
@@ -161,7 +163,9 @@ export function RobotInventory() {
               key={drawer.id}
               onClick={() => toggleDrawer(drawer.id)}
               className={`absolute flex items-center justify-center transition-all duration-300 ${
-                drawerJamStatus !== 'ok'
+                 drawer.disabled
+                  ? 'cursor-not-allowed opacity-30'  // ← mờ, không click
+                  : drawerJamStatus !== 'ok'
                   ? 'cursor-not-allowed opacity-50'
                   : openDrawer === drawer.id
                     ? 'animate-pulse cursor-pointer'
