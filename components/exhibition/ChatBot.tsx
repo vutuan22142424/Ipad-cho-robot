@@ -136,41 +136,69 @@ function VoiceOverlay({ onClose, onResult }: { onClose: () => void; onResult: (t
     }
   }, [onClose, stopAndSend]);
 
-  const startCapacitorRecognition = useCallback(async () => { //  dùng plugin native cho Android/iOS, mạnh hơn, chính xác hơn
-    try {
-      const { SpeechRecognition } = await import('@capacitor-community/speech-recognition');
-      const { available } = await SpeechRecognition.available();
-      if (!available) { setStatus('unsupported'); setErrorMsg('Thiết bị chưa hỗ trợ nhận dạng giọng nói.'); return; }
+        const startCapacitorRecognition = useCallback(async () => {
+          try {
+            const { SpeechRecognition } = await import('@capacitor-community/speech-recognition');
+            const { available } = await SpeechRecognition.available();
+            if (!available) { setStatus('unsupported'); setErrorMsg('Thiết bị chưa hỗ trợ nhận dạng giọng nói.'); return; }
 
-      const perm = await SpeechRecognition.requestPermissions();
-      if (perm.speechRecognition === 'denied') {
-        setStatus('error'); setErrorMsg('Vui lòng cấp quyền microphone trong Cài đặt.');
-        setTimeout(() => { if (mountedRef.current) onClose(); }, 2500); return;
-      }
+            const perm = await SpeechRecognition.requestPermissions();
+            if (perm.speechRecognition === 'denied') {
+              setStatus('error'); setErrorMsg('Vui lòng cấp quyền microphone trong Cài đặt.');
+              setTimeout(() => { if (mountedRef.current) onClose(); }, 2500); return;
+            }
 
-      setStatus('listening');
-      let latestText = '';
-      const listener = await SpeechRecognition.addListener('partialResults', (data: any) => {
-        if (!mountedRef.current) return;
-        const matches = data.matches || [];
-        if (matches.length > 0) { latestText = matches[0]; setDisplayText(latestText); }
-      });
+            setStatus('listening');
+            let latestText = '';
 
-      await SpeechRecognition.start({ language: 'vi-VN', maxResults: 3, partialResults: true, popup: false });
-      cleanupRef.current = () => {
-        try { SpeechRecognition.stop(); } catch {}
-        try { listener.remove(); } catch {}
-        try { SpeechRecognition.removeAllListeners(); } catch {}
-      };
+            const partialListener = await SpeechRecognition.addListener('partialResults', (data: any) => {
+              if (!mountedRef.current) return;
+              const matches = data.matches || [];
+              if (matches.length > 0) { latestText = matches[0]; setDisplayText(latestText); }
+            });
 
-      setTimeout(() => {
-        if (mountedRef.current) { try { cleanupRef.current?.(); } catch {} stopAndSend(latestText); }
-      }, 10000);
-    } catch {
-      setStatus('error'); setErrorMsg('Lỗi nhận dạng giọng nói. Thử lại nhé!');
-      setTimeout(() => { if (mountedRef.current) onClose(); }, 2000);
-    }
-  }, [onClose, stopAndSend]);
+            // ← THÊM: lắng nghe khi recognition tự dừng (nói xong → gửi luôn)
+            const stateListener = await SpeechRecognition.addListener('listeningState', (data: any) => {
+              if (!mountedRef.current) return;
+              if (data.status === 'stopped') {
+                try { partialListener.remove(); stateListener.remove(); } catch {}
+                if (latestText.trim()) {
+                  stopAndSend(latestText);
+                } else {
+                  setStatus('error');
+                  setErrorMsg('Không nhận được giọng nói. Hãy thử lại!');
+                  setTimeout(() => { if (mountedRef.current) onClose(); }, 2000);
+                }
+              }
+            });
+
+            await SpeechRecognition.start({
+              language: 'vi-VN',
+              maxResults: 3,
+              partialResults: true,
+              popup: false,
+            });
+
+            cleanupRef.current = () => {
+              try { SpeechRecognition.stop(); } catch {}
+              try { partialListener.remove(); } catch {}
+              try { stateListener.remove(); } catch {}
+              try { SpeechRecognition.removeAllListeners(); } catch {}
+            };
+
+            // Giữ timeout 15s làm safety net phòng listener không fire
+            setTimeout(() => {
+              if (mountedRef.current) {
+                try { cleanupRef.current?.(); } catch {}
+                if (latestText.trim()) stopAndSend(latestText);
+              }
+            }, 15000);
+
+          } catch {
+            setStatus('error'); setErrorMsg('Lỗi nhận dạng giọng nói. Thử lại nhé!');
+            setTimeout(() => { if (mountedRef.current) onClose(); }, 2000);
+          }
+        }, [onClose, stopAndSend]);
 
   useEffect(() => {
     mountedRef.current = true;

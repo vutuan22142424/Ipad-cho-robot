@@ -38,35 +38,35 @@ const BOOTHS = [
   color: '#06b6d4', icon: '🚻', desc: 'Nhà vệ sinh',
   overlay: { top: '15.85%', left: '7.15%', width: '7.27%', height: '29.21%' },
   },
-  { id: 'R1', name: 'Phòng 1', ros_x: 14.0532, ros_y: 8.76577,
+  { id: 'R1', name: 'Cocacola', ros_x: 14.0532, ros_y: 8.76577,
   color: '#ef4444', icon: '🏪', desc: 'Gian hàng phòng 1',
   overlay: { top: '15.63%', left: '18.02%', width: '10.59%', height: '29.33%' } },
 
-{ id: 'R2', name: 'Phòng 2', ros_x: 17.0131, ros_y: 6.67717,
+{ id: 'R2', name: 'Abbot', ros_x: 17.0131, ros_y: 6.67717,
   color: '#f59e0b', icon: '🏪', desc: 'Gian hàng phòng 2',
   overlay: { top: '66.32%', left: '18.18%', width: '16.82%', height: '26.60%' } },
 
-{ id: 'R3', name: 'Phòng 3', ros_x: 18.7271, ros_y: 8.76577,
+{ id: 'R3', name: 'PEPSI', ros_x: 18.7271, ros_y: 8.76577,
   color: '#22c55e', icon: '🏪', desc: 'Gian hàng phòng 3',
   overlay: { top: '15.63%', left: '29.09%', width: '11.86%', height: '29.33%' } },
 
-{ id: 'R4', name: 'Phòng 4', ros_x: 24.8787, ros_y: 8.76577,
+{ id: 'R4', name: 'Heineken', ros_x: 24.8787, ros_y: 8.76577,
   color: '#3b82f6', icon: '🏪', desc: 'Gian hàng phòng 4',
   overlay: { top: '15.63%', left: '41.36%', width: '14.05%', height: '29.33%' } },
 
-{ id: 'R5', name: 'Phòng 5', ros_x: 26.3214, ros_y: 6.67717,
+{ id: 'R5', name: 'Nutifood', ros_x: 26.3214, ros_y: 6.67717,
   color: '#8b5cf6', icon: '🏪', desc: 'Gian hàng phòng 5',
   overlay: { top: '66.32%', left: '35.68%', width: '24.23%', height: '26.60%' } },
 
-{ id: 'R6', name: 'Phòng 6', ros_x: 36.6769, ros_y: 8.76577,
+{ id: 'R6', name: 'Tiger', ros_x: 36.6769, ros_y: 8.76577,
   color: '#ec4899', icon: '🏪', desc: 'Gian hàng phòng 6',
   overlay: { top: '15.63%', left: '55.68%', width: '13.16%', height: '29.33%' } },
 
-{ id: 'R7', name: 'Phòng 7', ros_x: 41.8303, ros_y: 8.76577,
+{ id: 'R7', name: 'SABECO', ros_x: 41.8303, ros_y: 8.76577,
   color: '#14b8a6', icon: '🏪', desc: 'Gian hàng phòng 7',
   overlay: { top: '15.63%', left: '69.20%', width: '20.23%', height: '29.33%' } },
 
-{ id: 'R8', name: 'Phòng 8', ros_x: 41.5576, ros_y: 6.67717,
+{ id: 'R8', name: 'Vinamilk', ros_x: 41.5576, ros_y: 6.67717,
   color: '#eab308', icon: '🏪', desc: 'Gian hàng phòng 8',
   overlay: { top: '66.32%', left: '60.23%', width: '29.23%', height: '26.60%' } },
 ].map(b => ({ ...b, ...rosToDisplay(b.ros_x, b.ros_y) }));
@@ -335,26 +335,69 @@ export function ExhibitionMap() {
     }
   }, [feedback]);
 
-  const handleDown = (e: React.MouseEvent | React.TouchEvent) => {
-    const cx = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const cy = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    isDraggingRef.current = false;
-    setIsDragging(false);
-    clickOrigin.current = { x: cx, y: cy };
-    dragStart.current = { x: cx - offset.x, y: cy - offset.y };
-  };
-  const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if ('buttons' in e && e.buttons !== 1) return;
-    const cx = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const cy = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    if (Math.hypot(cx - clickOrigin.current.x, cy - clickOrigin.current.y) > 5) {
-      isDraggingRef.current = true;
-      setIsDragging(true);
-      setOffset({ x: cx - dragStart.current.x, y: cy - dragStart.current.y });
-    }
-  };
-  const handleUp = () => { setTimeout(() => { isDraggingRef.current = false; setIsDragging(false); }, 80); };
+         const lastTouchDist = useRef<number | null>(null);
 
+        const handleDown = (e: React.MouseEvent | React.TouchEvent) => {
+          if ('touches' in e) {
+            if (e.touches.length === 2) {
+              // Bắt đầu pinch — reset dist
+              const dx = e.touches[0].clientX - e.touches[1].clientX;
+              const dy = e.touches[0].clientY - e.touches[1].clientY;
+              lastTouchDist.current = Math.hypot(dx, dy);
+              return;
+            }
+            const cx = e.touches[0].clientX;
+            const cy = e.touches[0].clientY;
+            isDraggingRef.current = false;
+            setIsDragging(false);
+            clickOrigin.current = { x: cx, y: cy };
+            dragStart.current = { x: cx - offset.x, y: cy - offset.y };
+          } else {
+            isDraggingRef.current = false;
+            setIsDragging(false);
+            clickOrigin.current = { x: e.clientX, y: e.clientY };
+            dragStart.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
+          }
+        };
+
+        const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
+          if ('touches' in e) {
+            // Pinch zoom — 2 ngón tay
+            if (e.touches.length === 2) {
+              const dx = e.touches[0].clientX - e.touches[1].clientX;
+              const dy = e.touches[0].clientY - e.touches[1].clientY;
+              const dist = Math.hypot(dx, dy);
+              if (lastTouchDist.current !== null) {
+                const delta = dist - lastTouchDist.current;
+                setScale(s => Math.min(Math.max(0.1, s + delta * 0.005), 2));
+              }
+              lastTouchDist.current = dist;
+              return;
+            }
+            // Pan — 1 ngón tay
+            const cx = e.touches[0].clientX;
+            const cy = e.touches[0].clientY;
+            if (Math.hypot(cx - clickOrigin.current.x, cy - clickOrigin.current.y) > 5) {
+              isDraggingRef.current = true;
+              setIsDragging(true);
+              setOffset({ x: cx - dragStart.current.x, y: cy - dragStart.current.y });
+            }
+          } else {
+            if (e.buttons !== 1) return;
+            const cx = e.clientX;
+            const cy = e.clientY;
+            if (Math.hypot(cx - clickOrigin.current.x, cy - clickOrigin.current.y) > 5) {
+              isDraggingRef.current = true;
+              setIsDragging(true);
+              setOffset({ x: cx - dragStart.current.x, y: cy - dragStart.current.y });
+            }
+          }
+        };
+
+        const handleUp = () => {
+          lastTouchDist.current = null;
+          setTimeout(() => { isDraggingRef.current = false; setIsDragging(false); }, 80);
+        };
   const startRoute = useCallback(() => {
     const queue = routeQueueRef.current;
     if (queue.length === 0) return;
@@ -552,7 +595,7 @@ export function ExhibitionMap() {
                       }}
                     >
                       {/* Badge tên phòng khi selected hoặc in queue */}
-                      {(isSelected || isInQueue) && (
+                      {/* {(isSelected || isInQueue) && (
                         <div
                           className="absolute bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-white font-bold whitespace-nowrap"
                           style={{
@@ -563,7 +606,7 @@ export function ExhibitionMap() {
                         >
                           {isSelected ? '📍 ' : ''}{booth.name}
                         </div>
-                      )}
+                      )} */}
                     </button>
                   );
                 })}
@@ -603,7 +646,7 @@ export function ExhibitionMap() {
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-bold text-white flex items-center gap-2">
               <MapPin className="w-4 h-4 text-sky-400" />
-              Lộ trình tuần tra
+              Lộ trình di chuyển
             </h3>
             <button onClick={() => setIsModalOpen(false)}
               className="w-8 h-8 flex items-center justify-center rounded-full bg-white/[0.05] text-slate-400 hover:text-white hover:bg-white/[0.1] transition">✕</button>
