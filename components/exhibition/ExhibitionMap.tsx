@@ -366,55 +366,55 @@ export function ExhibitionMap() {
               };
 
               const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
-                if ('touches' in e) {
-                  if (e.touches.length === 2) {
-                    const dx = e.touches[0].clientX - e.touches[1].clientX;
-                    const dy = e.touches[0].clientY - e.touches[1].clientY;
-                    const dist = Math.hypot(dx, dy);
+               if ('touches' in e) {
+                if (e.touches.length === 2) {
+                  const dx = e.touches[0].clientX - e.touches[1].clientX;
+                  const dy = e.touches[0].clientY - e.touches[1].clientY;
+                  const dist = Math.hypot(dx, dy);
+                  const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                  const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
 
-                    // Điểm giữa 2 ngón hiện tại
-                    const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-                    const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                  if (lastTouchDist.current !== null) {
+                    const ratio = dist / lastTouchDist.current;
+                    // ← dùng stateRef thay vì state để đọc giá trị mới nhất
+                    const prevScale  = stateRef.current.scale;
+                    const prevOffset = stateRef.current.offset;
+                    const newScale   = Math.min(Math.max(0.1, prevScale * ratio), 2);
 
-                    if (lastTouchDist.current !== null && lastPinchCenter.current !== null) {
-                      const ratio = dist / lastTouchDist.current;
+                    // Tính offset mới để zoom vào đúng điểm giữa 2 ngón
+                    const newOffset = {
+                      x: centerX - (centerX - prevOffset.x) * (newScale / prevScale),
+                      y: centerY - (centerY - prevOffset.y) * (newScale / prevScale),
+                    };
 
-                      // Zoom tại điểm giữa 2 ngón
-                      setScale(prev => {
-                        const newScale = Math.min(Math.max(0.1, prev * ratio), 2);
-                        // Điều chỉnh offset để zoom vào đúng điểm giữa
-                        setOffset(prevOffset => ({
-                          x: centerX - (centerX - prevOffset.x) * (newScale / prev),
-                          y: centerY - (centerY - prevOffset.y) * (newScale / prev),
-                        }));
-                        return newScale;
-                      });
-                    }
-
-                    lastTouchDist.current = dist;
-                    lastPinchCenter.current = { x: centerX, y: centerY };
-                    return;
+                    setScale(newScale);   // ← tách riêng
+                    setOffset(newOffset); // ← tách riêng
                   }
 
-                  // Pan — 1 ngón tay
-                  const cx = e.touches[0].clientX;
-                  const cy = e.touches[0].clientY;
-                  if (Math.hypot(cx - clickOrigin.current.x, cy - clickOrigin.current.y) > 5) {
-                    isDraggingRef.current = true;
-                    setIsDragging(true);
-                    setOffset({ x: cx - dragStart.current.x, y: cy - dragStart.current.y });
-                  }
-                } else {
-                  if (e.buttons !== 1) return;
-                  const cx = e.clientX;
-                  const cy = e.clientY;
-                  if (Math.hypot(cx - clickOrigin.current.x, cy - clickOrigin.current.y) > 5) {
-                    isDraggingRef.current = true;
-                    setIsDragging(true);
-                    setOffset({ x: cx - dragStart.current.x, y: cy - dragStart.current.y });
-                  }
+                  lastTouchDist.current = dist;
+                  lastPinchCenter.current = { x: centerX, y: centerY };
+                  return;
                 }
-              };
+
+                // Pan — 1 ngón tay
+                const cx = e.touches[0].clientX;
+                const cy = e.touches[0].clientY;
+                if (Math.hypot(cx - clickOrigin.current.x, cy - clickOrigin.current.y) > 5) {
+                  isDraggingRef.current = true;
+                  setIsDragging(true);
+                  setOffset({ x: cx - dragStart.current.x, y: cy - dragStart.current.y });
+                }
+              } else {
+                if (e.buttons !== 1) return;
+                const cx = e.clientX;
+                const cy = e.clientY;
+                if (Math.hypot(cx - clickOrigin.current.x, cy - clickOrigin.current.y) > 5) {
+                  isDraggingRef.current = true;
+                  setIsDragging(true);
+                  setOffset({ x: cx - dragStart.current.x, y: cy - dragStart.current.y });
+                }
+              }
+            };
 
               const handleUp = () => {
                 lastTouchDist.current = null;
@@ -557,13 +557,15 @@ export function ExhibitionMap() {
           {/* Đây là các button trong suốt đè lên ảnh bản đồ */}
           <div
                 className="absolute pointer-events-none"
-                style={{
-                  left: offset.x,
-                  top: offset.y,
-                  width: MAP_W * scale,
-                  height: MAP_H * scale,
-                }}
-              >
+                  style={{
+                    left: 0,
+                    top: 0,
+                    width: MAP_W,
+                    height: MAP_H,
+                    transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+                    transformOrigin: '0 0',
+                  }}
+                >
                 {BOOTHS.map(booth => {
                   const isSelected = selectedBooth === booth.id;
                   const isInQueue  = routeQueue.some(r => r.boothId === booth.id);
