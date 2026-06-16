@@ -194,78 +194,59 @@ export function RobotInventory() {
         </div>
       </div>
 
-      <div className="w-[45%] max-w-[220px] bg-slate-800/80 border-l border-white/10 p-2.5 sm:p-4 flex flex-col flex-shrink-0 backdrop-blur-md z-30">
-        <div className="flex items-start sm:items-center bg-blue-500/10 border border-blue-500/20 sm:px-2.5 sm:py-2 rounded-lg mb-2 sm:mb-3 flex-shrink-0 shadow-inner">
-          <span className="text-[12px] leading-none mt-0.5 sm:mt-0">👈</span>
-          <span className="text-[9px] sm:text-[10.5px] text-blue-200 font-medium leading-tight">
-            Chạm để mở ngăn
-          </span>
-        </div>
+          <div className="w-[45%] max-w-[220px] bg-slate-800/80 border-l border-white/10 p-2 flex flex-col flex-shrink-0 backdrop-blur-md z-30">
+            <div className="flex items-center bg-blue-500/10 border border-blue-500/20 px-2 py-1.5 rounded-lg mb-2 flex-shrink-0">
+              <span className="text-[10px] leading-none">👈</span>
+              <span className="text-[9px] text-blue-200 font-medium leading-tight ml-1">Chạm để mở ngăn</span>
+            </div>
 
-        <div
-          className="flex pl-1 sm:pl-2 flex-col gap-2.5 overflow-y-auto pr-1 flex-1"
-          style={{ scrollbarWidth: 'none' }}
-        >
-          {DRAWERS.map((drawer, index) => {
-            const isOpen = openDrawer === drawer.id;
-            const isJammedDrawer = drawerJamStatus !== 'ok' && drawerJamId === drawer.id;
-            return (
-              <div
-                key={drawer.id}
-                ref={el => { itemRefs.current[index] = el; }}
-                className={`rounded-xl p-2.5 border transition-all duration-300 ${
-                  isOpen ? 'shadow-lg scale-[1.02]' : 'hover:brightness-110'
-                }`}
-                style={{
-                  borderColor: isJammedDrawer
-                    ? '#f59e0b'
-                    : isOpen ? drawer.color : rgba(drawer.color, 0.25),
-                  background: isJammedDrawer
-                    ? 'rgba(245,158,11,0.08)'
-                    : isOpen ? rgba(drawer.color, 0.13) : rgba(drawer.color, 0.06),
-                }}
-              >
-                <div className="flex items-center gap-2 mb-2">
+            {/* Hiển thị theo thứ tự từ trên xuống: CATALOGUE → ĐỒ ĂN NHẸ → ĐỒ UỐNG */}
+            <div className="flex flex-col gap-1.5 flex-1">
+              {[...DRAWERS].reverse().map((drawer, index) => {
+                const isOpen = openDrawer === drawer.id;
+                const isJammedDrawer = drawerJamStatus !== 'ok' && drawerJamId === drawer.id;
+                return (
                   <div
-                    className={`w-2 h-2 rounded-full flex-shrink-0 ${isOpen || isJammedDrawer ? 'animate-pulse' : ''}`}
+                    key={drawer.id}
+                    ref={el => { itemRefs.current[index] = el; }}
+                    className="flex-1 rounded-xl px-2 py-1.5 border transition-all duration-300"
                     style={{
-                      background: isJammedDrawer ? '#f59e0b' : drawer.color,
-                      boxShadow: isOpen ? `0 0 8px ${drawer.color}` : isJammedDrawer ? '0 0 8px #f59e0b' : 'none',
-                    }}
-                  />
-                  <span className="text-[11px] font-bold text-white whitespace-nowrap">
-                    {drawer.name}
-                  </span>
-                </div>
-
-                {isOpen && !isJammedDrawer && (
-                  <div
-                    className="mt-1 w-full py-1.5 rounded-lg font-bold text-[7.5px] text-white uppercase text-center shadow-md"
-                    style={{
-                      background: drawer.color,
-                      boxShadow: `0 2px 10px ${rgba(drawer.color, 0.31)}`,
+                      borderColor: isJammedDrawer ? '#f59e0b' : isOpen ? drawer.color : rgba(drawer.color, 0.25),
+                      background: isJammedDrawer ? 'rgba(245,158,11,0.08)' : isOpen ? rgba(drawer.color, 0.13) : rgba(drawer.color, 0.06),
                     }}
                   >
-                    ĐANG MỞ — CHỜ ĐÓNG LẠI...
-                  </div>
-                )}
+                    <div className="flex items-center gap-1.5">
+                      <div
+                        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isOpen || isJammedDrawer ? 'animate-pulse' : ''}`}
+                        style={{
+                          background: isJammedDrawer ? '#f59e0b' : drawer.color,
+                          boxShadow: isOpen ? `0 0 6px ${drawer.color}` : 'none',
+                        }}
+                      />
+                      <span className="text-[9px] font-bold text-white whitespace-nowrap">{drawer.name}</span>
+                    </div>
 
-                {isJammedDrawer && drawerJamStatus === 'retrying' && (
-                  <div className="mt-1 w-full py-1.5 rounded-lg font-bold text-[7.5px] text-amber-300 uppercase text-center bg-amber-500/20 border border-amber-500/30">
-                    ⚙️ ĐANG THỬ LẠI...
+                    {isOpen && !isJammedDrawer && (
+                      <div className="mt-1 w-full py-0.5 rounded font-bold text-[7px] text-white uppercase text-center"
+                        style={{ background: drawer.color }}>
+                        ĐANG MỞ...
+                      </div>
+                    )}
+                    {isJammedDrawer && drawerJamStatus === 'retrying' && (
+                      <div className="mt-1 w-full py-0.5 rounded font-bold text-[7px] text-amber-300 uppercase text-center bg-amber-500/20">
+                        ⚙️ THỬ LẠI...
+                      </div>
+                    )}
+                    {isJammedDrawer && drawerJamStatus === 'jammed' && (
+                      <div className="mt-1 w-full py-0.5 rounded font-bold text-[7px] text-red-300 uppercase text-center bg-red-500/20">
+                        🚨 BỊ KẸT
+                      </div>
+                    )}
                   </div>
-                )}
-
-                {isJammedDrawer && drawerJamStatus === 'jammed' && (
-                  <div className="mt-1 w-full py-1.5 rounded-lg font-bold text-[7.5px] text-red-300 uppercase text-center bg-red-500/20 border border-red-500/30">
-                    🚨 BỊ KẸT — GỌI KỸ THUẬT
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+                );
+              })}
+            </div>
+          </div>
+          </div>
   );
 }

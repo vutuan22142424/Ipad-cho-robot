@@ -24,57 +24,42 @@ function rosToDisplay(rx: number, ry: number) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  BOOTHS — tọa độ ROS + vị trí overlay (% trên ảnh bản đồ)
+//  BOOTHS
 // ═══════════════════════════════════════════════════════════════════════════════
 const BOOTHS = [
-  // {
-  //   id: 'DOCK',  name: 'Dock',        ros_x: 6.62135, ros_y: 6.52340,
-  //   color: '#f97316', icon: '🔌', desc: 'Trạm sạc robot',
-  //   // Vị trí overlay trên ảnh bản đồ (%)
-  //   overlay: { top: '52%', left: '0%', width: '12%', height: '48%' },
-  // },
-  {
-   id: 'WC', name: 'Nhà vệ sinh', ros_x: 7.76175, ros_y: 8.68889,
-  color: '#06b6d4', icon: '🚻', desc: 'Nhà vệ sinh',
-  overlay: { top: '15.85%', left: '7.15%', width: '7.27%', height: '29.21%' },
-  },
+  { id: 'WC', name: 'Nhà vệ sinh', ros_x: 7.76175, ros_y: 8.68889,
+    color: '#06b6d4', icon: '🚻', desc: 'Nhà vệ sinh',
+    overlay: { top: '15.85%', left: '7.15%', width: '7.27%', height: '29.21%' } },
   { id: 'R1', name: 'Cocacola', ros_x: 14.0532, ros_y: 8.76577,
-  color: '#ef4444', icon: '🏪', desc: 'Gian hàng phòng 1',
-  overlay: { top: '15.63%', left: '18.02%', width: '10.59%', height: '29.33%' } },
-
-{ id: 'R2', name: 'Abbot', ros_x: 17.0131, ros_y: 6.67717,
-  color: '#f59e0b', icon: '🏪', desc: 'Gian hàng phòng 2',
-  overlay: { top: '66.32%', left: '18.18%', width: '16.82%', height: '26.60%' } },
-
-{ id: 'R3', name: 'PEPSI', ros_x: 18.7271, ros_y: 8.76577,
-  color: '#22c55e', icon: '🏪', desc: 'Gian hàng phòng 3',
-  overlay: { top: '15.63%', left: '29.09%', width: '11.86%', height: '29.33%' } },
-
-{ id: 'R4', name: 'Heineken', ros_x: 24.8787, ros_y: 8.76577,
-  color: '#3b82f6', icon: '🏪', desc: 'Gian hàng phòng 4',
-  overlay: { top: '15.63%', left: '41.36%', width: '14.05%', height: '29.33%' } },
-
-{ id: 'R5', name: 'Nutifood', ros_x: 26.3214, ros_y: 6.67717,
-  color: '#8b5cf6', icon: '🏪', desc: 'Gian hàng phòng 5',
-  overlay: { top: '66.32%', left: '35.68%', width: '24.23%', height: '26.60%' } },
-
-{ id: 'R6', name: 'Tiger', ros_x: 36.6769, ros_y: 8.76577,
-  color: '#ec4899', icon: '🏪', desc: 'Gian hàng phòng 6',
-  overlay: { top: '15.63%', left: '55.68%', width: '13.16%', height: '29.33%' } },
-
-{ id: 'R7', name: 'SABECO', ros_x: 41.8303, ros_y: 8.76577,
-  color: '#14b8a6', icon: '🏪', desc: 'Gian hàng phòng 7',
-  overlay: { top: '15.63%', left: '69.20%', width: '20.23%', height: '29.33%' } },
-
-{ id: 'R8', name: 'Vinamilk', ros_x: 41.5576, ros_y: 6.67717,
-  color: '#eab308', icon: '🏪', desc: 'Gian hàng phòng 8',
-  overlay: { top: '66.32%', left: '60.23%', width: '29.23%', height: '26.60%' } },
+    color: '#ef4444', icon: '🏪', desc: 'Gian hàng phòng 1',
+    overlay: { top: '15.63%', left: '18.02%', width: '10.59%', height: '29.33%' } },
+  { id: 'R2', name: 'Abbot', ros_x: 17.0131, ros_y: 6.67717,
+    color: '#f59e0b', icon: '🏪', desc: 'Gian hàng phòng 2',
+    overlay: { top: '66.32%', left: '18.18%', width: '16.82%', height: '26.60%' } },
+  { id: 'R3', name: 'PEPSI', ros_x: 18.7271, ros_y: 8.76577,
+    color: '#22c55e', icon: '🏪', desc: 'Gian hàng phòng 3',
+    overlay: { top: '15.63%', left: '29.09%', width: '11.86%', height: '29.33%' } },
+  { id: 'R4', name: 'Heineken', ros_x: 24.8787, ros_y: 8.76577,
+    color: '#3b82f6', icon: '🏪', desc: 'Gian hàng phòng 4',
+    overlay: { top: '15.63%', left: '41.36%', width: '14.05%', height: '29.33%' } },
+  { id: 'R5', name: 'Nutifood', ros_x: 26.3214, ros_y: 6.67717,
+    color: '#8b5cf6', icon: '🏪', desc: 'Gian hàng phòng 5',
+    overlay: { top: '66.32%', left: '35.68%', width: '24.23%', height: '26.60%' } },
+  { id: 'R6', name: 'Tiger', ros_x: 36.6769, ros_y: 8.76577,
+    color: '#ec4899', icon: '🏪', desc: 'Gian hàng phòng 6',
+    overlay: { top: '15.63%', left: '55.68%', width: '13.16%', height: '29.33%' } },
+  { id: 'R7', name: 'SABECO', ros_x: 41.8303, ros_y: 8.76577,
+    color: '#14b8a6', icon: '🏪', desc: 'Gian hàng phòng 7',
+    overlay: { top: '15.63%', left: '69.20%', width: '20.23%', height: '29.33%' } },
+  { id: 'R8', name: 'Vinamilk', ros_x: 41.5576, ros_y: 6.67717,
+    color: '#eab308', icon: '🏪', desc: 'Gian hàng phòng 8',
+    overlay: { top: '66.32%', left: '60.23%', width: '29.23%', height: '26.60%' } },
 ].map(b => ({ ...b, ...rosToDisplay(b.ros_x, b.ros_y) }));
 
 const ROBOT_START_ROS = { x: 2.0, y: 7.6 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  CANVAS DRAW HELPERS (không có drawBooths nữa)
+//  CANVAS DRAW HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 function drawPath(
   ctx: CanvasRenderingContext2D, scale: number,
@@ -130,16 +115,16 @@ function drawRobot(
   ctx.font = `${14 / scale}px sans-serif`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText('🤖', pos.x, pos.y + 0.5 / scale);
-  const coord = `(${rosPos.x.toFixed(2)}, ${rosPos.y.toFixed(2)})`;
-  ctx.font = `${8 / scale}px monospace`;
-  const fw = ctx.measureText(coord).width;
-  const pw = fw + 10 / scale, ph = 14 / scale;
-  const ly = pos.y + r + 6 / scale;
-  ctx.fillStyle = 'rgba(7,12,24,0.92)';
-  ctx.strokeStyle = color + '50'; ctx.lineWidth = 0.5 / scale;
-  ctx.beginPath(); (ctx as any).roundRect(pos.x - pw / 2, ly, pw, ph, 3 / scale); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(coord, pos.x, ly + ph / 2);
+  // const coord = `(${rosPos.x.toFixed(2)}, ${rosPos.y.toFixed(2)})`;
+  // ctx.font = `${8 / scale}px monospace`;
+  // const fw = ctx.measureText(coord).width;
+  // const pw = fw + 10 / scale, ph = 14 / scale;
+  // const ly = pos.y + r + 6 / scale;
+  // ctx.fillStyle = 'rgba(7,12,24,0.92)';
+  // ctx.strokeStyle = color + '50'; ctx.lineWidth = 0.5 / scale;
+  // ctx.beginPath(); (ctx as any).roundRect(pos.x - pw / 2, ly, pw, ph, 3 / scale); ctx.fill(); ctx.stroke();
+  // ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  // ctx.fillText(coord, pos.x, ly + ph / 2);
   ctx.textBaseline = 'alphabetic';
 }
 
@@ -177,7 +162,7 @@ export function ExhibitionMap() {
   const { pose, feedback, publishCommand } = useRobotMQTT();
 
   const [scale, setScale]           = useState(0.2);
-  const [offset, setOffset]         = useState({ x: 0, y: 0 });
+  const [offset, setOffset]         = useState({ x: -50, y: 80 });
   const [isDragging, setIsDragging] = useState(false);
   const isDraggingRef               = useRef(false);
   const clickOrigin                 = useRef({ x: 0, y: 0 });
@@ -188,6 +173,25 @@ export function ExhibitionMap() {
   const pulseRef                    = useRef(0);
   const mapImageRef                 = useRef<HTMLImageElement | null>(null);
 
+  // Refs để sync ngay lập tức không chờ re-render
+  const scaleRef  = useRef(0.2);
+  const offsetRef = useRef({ x: 0, y: 0 });
+
+  const updateScale = (newScale: number) => {
+    scaleRef.current = newScale;
+    setScale(newScale);
+  };
+  const updateOffset = (newOffset: { x: number; y: number }) => {
+    offsetRef.current = newOffset;
+    setOffset(newOffset);
+  };
+
+  // ── Pinch zoom refs ──
+  const lastTouchDist   = useRef<number | null>(null);
+  const lastPinchCenter = useRef<{ x: number; y: number } | null>(null);
+  const isPinching      = useRef(false);      // ← đang pinch không?
+  const pinchEndTime    = useRef<number>(0);  // ← thời điểm kết thúc pinch
+
   const [robotPos, setRobotPos] = useState(rosToDisplay(ROBOT_START_ROS.x, ROBOT_START_ROS.y));
   const [robotRos, setRobotRos] = useState(ROBOT_START_ROS);
 
@@ -196,25 +200,15 @@ export function ExhibitionMap() {
   const [selectedBooth, setSelectedBooth] = useState<string | null>(null);
   const [navStatus, setNavStatus]         = useState<NavStatus>('idle');
   const [navMessage, setNavMessage]       = useState('');
-  const [eta, setEta]                     = useState(0);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showConfirmCancel, setShowConfirmCancel] = useState(false); // ← dialog xác nhận huỷ
   const [failedDialog, setFailedDialog]   = useState<FailedDialogState>(null);
 
   const [isModalOpen, setIsModalOpen]       = useState(false);
   const [routeQueue, setRouteQueue]         = useState<RouteItem[]>([]);
   const [isManualPaused, setIsManualPaused] = useState(false);
   const routeQueueRef = useRef(routeQueue);
-  const scaleRef  = useRef(0.2);
-  const offsetRef = useRef({ x: 0, y: 0 });
-  // Sửa setScale và setOffset để sync ref ngay lập tức
-const updateScale = (newScale: number) => {
-  scaleRef.current = newScale;
-  setScale(newScale);
-};
-const updateOffset = (newOffset: { x: number; y: number }) => {
-  offsetRef.current = newOffset;
-  setOffset(newOffset);
-};
+
   useEffect(() => { routeQueueRef.current = routeQueue; }, [routeQueue]);
   useEffect(() => { setNavigating(isModalOpen); }, [isModalOpen]);
 
@@ -225,12 +219,12 @@ const updateOffset = (newOffset: { x: number; y: number }) => {
     img.onload = () => { mapImageRef.current = img; };
   }, []);
 
-  const stateRef = useRef({ robotPos, robotRos, goalPos, goalRos, selectedBooth, navStatus, scale, offset });
+  const stateRef = useRef({ robotPos, robotRos, goalPos, goalRos, navStatus, scale, offset });
   useEffect(() => {
-    stateRef.current = { robotPos, robotRos, goalPos, goalRos, selectedBooth, navStatus, scale, offset };
-  }, [robotPos, robotRos, goalPos, goalRos, selectedBooth, navStatus, scale, offset]);
+    stateRef.current = { robotPos, robotRos, goalPos, goalRos, navStatus, scale, offset };
+  }, [robotPos, robotRos, goalPos, goalRos, navStatus, scale, offset]);
 
-  // Canvas render loop — KHÔNG vẽ booth nữa
+  // ─── Canvas render loop ───
   useEffect(() => {
     function loop() {
       pulseRef.current = (pulseRef.current + 0.016) % 1;
@@ -246,15 +240,12 @@ const updateOffset = (newOffset: { x: number; y: number }) => {
       ctx.save();
       ctx.translate(offset.x, offset.y);
       ctx.scale(scale, scale);
-      // Vẽ ảnh bản đồ
       if (mapImageRef.current) {
         ctx.drawImage(mapImageRef.current, 0, 0, MAP_W, MAP_H);
       }
-      // Vẽ đường path
       if (goalPos && goalRos) {
         drawPath(ctx, scale, robotPos, goalPos, robotRos, goalRos, pulseRef.current * 13);
       }
-      // Vẽ robot (KHÔNG vẽ booth)
       drawRobot(ctx, scale, robotPos, robotRos, pulseRef.current, navStatus);
       ctx.restore();
       animRef.current = requestAnimationFrame(loop);
@@ -306,7 +297,7 @@ const updateOffset = (newOffset: { x: number; y: number }) => {
       case 'CANCELING':  setNavStatus('canceling'); setNavMessage('Đang dừng robot...'); break;
       case 'CANCELED':
         setNavStatus('idle'); setGoalPos(null); setGoalRos(null);
-        setSelectedBooth(null); setEta(0); setIsManualPaused(false); setNavMessage('');
+        setSelectedBooth(null); setIsManualPaused(false); setNavMessage('');
         setShowCancelDialog(true);
         break;
       case 'ACCEPTED':            setNavStatus('queued'); setNavMessage('Robot đã nhận lệnh, đang chuẩn bị...'); break;
@@ -346,100 +337,124 @@ const updateOffset = (newOffset: { x: number; y: number }) => {
     }
   }, [feedback]);
 
-              const lastTouchDist = useRef<number | null>(null);
-              const lastPinchCenter = useRef<{ x: number; y: number } | null>(null);
+  // ─── Touch / Mouse handlers ───
+  const handleDown = (e: React.MouseEvent | React.TouchEvent) => {
+    if ('touches' in e) {
+      if (e.touches.length === 2) {
+        // Bắt đầu pinch
+        isPinching.current = true;
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        lastTouchDist.current = Math.hypot(dx, dy);
+        lastPinchCenter.current = {
+          x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+          y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+        };
+        return;
+      }
+      // 1 ngón — chỉ bắt đầu pan nếu không đang trong cooldown pinch
+      const now = Date.now();
+      if (now - pinchEndTime.current < 300) return; // ← bỏ qua 300ms sau pinch
+      const cx = e.touches[0].clientX;
+      const cy = e.touches[0].clientY;
+      isDraggingRef.current = false;
+      setIsDragging(false);
+      clickOrigin.current = { x: cx, y: cy };
+      dragStart.current = { x: cx - offsetRef.current.x, y: cy - offsetRef.current.y };
+    } else {
+      isDraggingRef.current = false;
+      setIsDragging(false);
+      clickOrigin.current = { x: e.clientX, y: e.clientY };
+      dragStart.current = { x: e.clientX - offsetRef.current.x, y: e.clientY - offsetRef.current.y };
+    }
+  };
 
-              const handleDown = (e: React.MouseEvent | React.TouchEvent) => {
-                if ('touches' in e) {
-                  if (e.touches.length === 2) {
-                    const dx = e.touches[0].clientX - e.touches[1].clientX;
-                    const dy = e.touches[0].clientY - e.touches[1].clientY;
-                    lastTouchDist.current = Math.hypot(dx, dy);
-                    // ← Lưu điểm giữa 2 ngón
-                    lastPinchCenter.current = {
-                      x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
-                      y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
-                    };
-                    return;
-                  }
-                  const cx = e.touches[0].clientX;
-                  const cy = e.touches[0].clientY;
-                  isDraggingRef.current = false;
-                  setIsDragging(false);
-                  clickOrigin.current = { x: cx, y: cy };
-                  dragStart.current = { x: cx - offset.x, y: cy - offset.y };
-                } else {
-                  isDraggingRef.current = false;
-                  setIsDragging(false);
-                  clickOrigin.current = { x: e.clientX, y: e.clientY };
-                  dragStart.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
-                }
-              };
+  const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if ('touches' in e) {
+      if (e.touches.length === 2) {
+        // Pinch zoom
+        isPinching.current = true;
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
 
-              const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
-               if ('touches' in e) {
-                if (e.touches.length === 2) {
-                  const dx = e.touches[0].clientX - e.touches[1].clientX;
-                  const dy = e.touches[0].clientY - e.touches[1].clientY;
-                  const dist = Math.hypot(dx, dy);
-                  const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-                  const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        if (lastTouchDist.current !== null) {
+          const ratio      = dist / lastTouchDist.current;
+          const prevScale  = scaleRef.current;
+          const prevOffset = offsetRef.current;
+          const newScale   = Math.min(Math.max(0.1, prevScale * ratio), 2);
+          const newOffset  = {
+            x: centerX - (centerX - prevOffset.x) * (newScale / prevScale),
+            y: centerY - (centerY - prevOffset.y) * (newScale / prevScale),
+          };
+          updateScale(newScale);
+          updateOffset(newOffset);
+        }
 
-                  if (lastTouchDist.current !== null) {
-                  const ratio = dist / lastTouchDist.current;
-                  const prevScale  = scaleRef.current;  // ← dùng ref thay vì stateRef
-                  const prevOffset = offsetRef.current; // ← dùng ref thay vì stateRef
-                  const newScale   = Math.min(Math.max(0.1, prevScale * ratio), 2);
+        lastTouchDist.current   = dist;
+        lastPinchCenter.current = { x: centerX, y: centerY };
+        return;
+      }
 
-                  const newOffset = {
-                    x: centerX - (centerX - prevOffset.x) * (newScale / prevScale),
-                    y: centerY - (centerY - prevOffset.y) * (newScale / prevScale),
-                  };
+      // 1 ngón — bỏ qua nếu vừa pinch xong
+      const now = Date.now();
+      if (isPinching.current || now - pinchEndTime.current < 300) return;
 
-                  updateScale(newScale);
-                  updateOffset(newOffset);
-                }
+      const cx = e.touches[0].clientX;
+      const cy = e.touches[0].clientY;
+      if (Math.hypot(cx - clickOrigin.current.x, cy - clickOrigin.current.y) > 5) {
+        isDraggingRef.current = true;
+        setIsDragging(true);
+        updateOffset({ x: cx - dragStart.current.x, y: cy - dragStart.current.y });
+      }
+    } else {
+      if (e.buttons !== 1) return;
+      const cx = e.clientX;
+      const cy = e.clientY;
+      if (Math.hypot(cx - clickOrigin.current.x, cy - clickOrigin.current.y) > 5) {
+        isDraggingRef.current = true;
+        setIsDragging(true);
+        updateOffset({ x: cx - dragStart.current.x, y: cy - dragStart.current.y });
+      }
+    }
+  };
 
+  const handleUp = (e: React.TouchEvent | React.MouseEvent) => {
+    if ('changedTouches' in e) {
+      // Khi ngón tay bỏ ra
+      const remaining = e.touches.length; // số ngón còn lại
 
-                  lastTouchDist.current = dist;
-                  lastPinchCenter.current = { x: centerX, y: centerY };
-                  return;
-                }
+      if (remaining === 0) {
+        // Bỏ hết ngón → kết thúc pinch hoàn toàn
+        if (isPinching.current) {
+          pinchEndTime.current = Date.now(); // ← ghi lại thời điểm kết thúc
+          isPinching.current = false;
+        }
+        lastTouchDist.current   = null;
+        lastPinchCenter.current = null;
+      } else if (remaining === 1 && isPinching.current) {
+        // Còn 1 ngón sau pinch → reset dragStart để không jump
+        isPinching.current    = false;
+        pinchEndTime.current  = Date.now(); // ← cooldown
+        lastTouchDist.current = null;
+        // Reset drag origin về ngón còn lại
+        dragStart.current = {
+          x: e.touches[0].clientX - offsetRef.current.x,
+          y: e.touches[0].clientY - offsetRef.current.y,
+        };
+        clickOrigin.current = {
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY,
+        };
+      }
+    }
 
-                // Pan — 1 ngón tay
-                const cx = e.touches[0].clientX;
-                const cy = e.touches[0].clientY;
-                // ← THÊM: nếu vừa kết thúc pinch → reset dragStart để tránh jump
-                if (lastTouchDist.current !== null) {
-                  lastTouchDist.current = null;
-                  dragStart.current = { x: cx - offsetRef.current.x, y: cy - offsetRef.current.y };
-                  clickOrigin.current = { x: cx, y: cy };
-                  return; // bỏ qua frame này
-                }
-                if (Math.hypot(cx - clickOrigin.current.x, cy - clickOrigin.current.y) > 5) {
-                  isDraggingRef.current = true;
-                  setIsDragging(true);
-                  setOffset({ x: cx - dragStart.current.x, y: cy - dragStart.current.y });
-                }
-              } else {
-                if (e.buttons !== 1) return;
-                const cx = e.clientX;
-                const cy = e.clientY;
-                if (Math.hypot(cx - clickOrigin.current.x, cy - clickOrigin.current.y) > 5) {
-                  isDraggingRef.current = true;
-                  setIsDragging(true);
-                  setOffset({ x: cx - dragStart.current.x, y: cy - dragStart.current.y });
-                }
-              }
-            };
+    setTimeout(() => { isDraggingRef.current = false; setIsDragging(false); }, 80);
+  };
 
-              const handleUp = () => {
-                lastTouchDist.current = null;
-                lastPinchCenter.current = null;
-                // Reset dragStart khi nhấc hết ngón tay
-                dragStart.current = { x: 0, y: 0 };
-                setTimeout(() => { isDraggingRef.current = false; setIsDragging(false); }, 80);
-              };
+  // ─── Navigation ───
   const startRoute = useCallback(() => {
     const queue = routeQueueRef.current;
     if (queue.length === 0) return;
@@ -476,18 +491,23 @@ const updateOffset = (newOffset: { x: number; y: number }) => {
       publishCommand('robot/cmd/pause', {}); forceSetPausedManual(); setIsManualPaused(true); setManualPaused(true);
     }
   };
-          const cancelNav = () => {
-          if (!window.confirm('Bạn có chắc muốn huỷ toàn bộ lộ trình không?')) return;
-          publishCommand('robot/cmd/cancel_request', { command_id: '*' });
-          setNavStatus('idle');
-          setRouteQueue([]);
-          setGoalPos(null);
-          setGoalRos(null);
-          setSelectedBooth(null);
-          setIsManualPaused(false);
-          setNavMessage('');
-          setManualPaused(false);
-        };
+
+  // ← Mở dialog xác nhận thay vì window.confirm
+  const cancelNav = () => setShowConfirmCancel(true);
+
+  // ← Thực sự huỷ sau khi xác nhận
+  const confirmCancel = () => {
+    setShowConfirmCancel(false);
+    publishCommand('robot/cmd/cancel_request', { command_id: '*' });
+    setNavStatus('idle');
+    setRouteQueue([]);
+    setGoalPos(null);
+    setGoalRos(null);
+    setSelectedBooth(null);
+    setIsManualPaused(false);
+    setNavMessage('');
+    setManualPaused(false);
+  };
 
   const addToRoute = useCallback((booth: typeof BOOTHS[0]) => {
     const navActive = ['moving', 'canceling', 'queued'].includes(navStatus);
@@ -506,19 +526,15 @@ const updateOffset = (newOffset: { x: number; y: number }) => {
 
   const removeFromRoute = (index: number) => setRouteQueue(prev => prev.filter((_, i) => i !== index));
 
-// focusRobot
-      const focusRobot = () => {
-        const container = mapContainerRef.current;
-        if (!container) return;
-        const rect = container.getBoundingClientRect();
-        updateOffset({ x: rect.width / 2 - robotPos.x * scaleRef.current, y: rect.height / 2 - robotPos.y * scaleRef.current });
-      };
-// adjustZoom
-const adjustZoom = (d: number) => {
-      const newScale = Math.min(Math.max(0.1, scaleRef.current + d), 2);
-      updateScale(newScale);
-    };
-  const resetMap = () => { updateScale(0.2); updateOffset({ x: 0, y: 0 }); };
+  const focusRobot = () => {
+    const container = mapContainerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    updateOffset({ x: rect.width / 2 - robotPos.x * scaleRef.current, y: rect.height / 2 - robotPos.y * scaleRef.current });
+  };
+
+  const adjustZoom = (d: number) => updateScale(Math.min(Math.max(0.1, scaleRef.current + d), 2));
+  const resetMap   = () => { updateScale(0.2); updateOffset({ x: 0, y: 0 }); };
 
   const isNavActive  = ['moving', 'canceling', 'queued'].includes(navStatus);
   const infoEtaText  = navStatus === 'arrived' ? '✓ Đã đến' : navStatus === 'canceling' ? 'Dừng' : navStatus === 'queued' ? 'Chờ...' : 'Đang đi...';
@@ -577,89 +593,63 @@ const adjustZoom = (d: number) => {
             style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
           />
 
-          {/* ── ROOM BUTTON OVERLAYS ── */}
-          {/* Đây là các button trong suốt đè lên ảnh bản đồ */}
+          {/* ROOM BUTTON OVERLAYS */}
           <div
-                className="absolute pointer-events-none"
-                  style={{
-                    left: 0,
-                    top: 0,
-                    width: MAP_W,
-                    height: MAP_H,
-                    transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
-                    transformOrigin: '0 0',
-                  }}
-                >
-                {BOOTHS.map(booth => {
-                  const isSelected = selectedBooth === booth.id;
-                  const isInQueue  = routeQueue.some(r => r.boothId === booth.id);
-                  const isMoving   = ['moving', 'queued'].includes(navStatus);
+            className="absolute pointer-events-none"
+            style={{
+              left: 0, top: 0,
+              width: MAP_W, height: MAP_H,
+              transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+              transformOrigin: '0 0',
+            }}
+          >
+            {BOOTHS.map(booth => {
+              const isSelected = selectedBooth === booth.id;
+              const isInQueue  = routeQueue.some(r => r.boothId === booth.id);
+              const isMoving   = ['moving', 'queued'].includes(navStatus);
 
-                  return (
-                    <button
-                      key={booth.id}
-                      onClick={(e) => { e.stopPropagation(); if (!isDraggingRef.current) addToRoute(booth); }}
-                      className="absolute pointer-events-auto transition-all duration-200 rounded-lg"
-                      style={{
-                        top:    booth.overlay.top,
-                        left:   booth.overlay.left,
-                        width:  booth.overlay.width,
-                        height: booth.overlay.height,
-                        background: isSelected
-                          ? `${booth.color}40`
-                          : isInQueue
-                            ? `${booth.color}25`
-                            : 'transparent',
-                        border: isSelected
-                          ? `2px solid ${booth.color}`
-                          : isInQueue
-                            ? `2px solid ${booth.color}60`
-                            : '2px solid transparent',
-                        boxShadow: isSelected ? `0 0 20px ${booth.color}60` : 'none',
-                        opacity: isMoving
-                          ? isSelected
-                            ? 1        // đang đến → sáng 100%
-                            : isInQueue
-                              ? 0.6    // trong queue → mờ 60%  
-                              : 0      // không trong queue → ẩn hoàn toàn
-                          : 1,         // không di chuyển → tất cả hiện 100%
-                            
-                        cursor: isMoving ? 'not-allowed' : 'pointer',
-                        transition: 'opacity 0.3s ease, background 0.2s, border 0.2s',
-                      }}
-                      onMouseEnter={e => {
-                        if (!isSelected && !isMoving) {
-                          e.currentTarget.style.background = `${booth.color}20`;
-                          e.currentTarget.style.border = `2px solid ${booth.color}60`;
-                        }
-                      }}
-                      onMouseLeave={e => {
-                        if (!isSelected && !isInQueue) {
-                          e.currentTarget.style.background = 'transparent';
-                          e.currentTarget.style.border = '2px solid transparent';
-                        } else if (!isSelected && isInQueue) {
-                          e.currentTarget.style.background = `${booth.color}20`;
-                          e.currentTarget.style.border = `2px solid ${booth.color}60`;
-                        }
-                      }}
-                    >
-                      {/* Badge tên phòng khi selected hoặc in queue */}
-                      {/* {(isSelected || isInQueue) && (
-                        <div
-                          className="absolute bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-white font-bold whitespace-nowrap"
-                          style={{
-                            fontSize: `${Math.max(8, 11 * scale)}px`,
-                            background: booth.color,
-                            boxShadow: `0 2px 8px ${booth.color}80`,
-                          }}
-                        >
-                          {isSelected ? '📍 ' : ''}{booth.name}
-                        </div>
-                      )} */}
-                    </button>
-                  );
-                })}
-              </div>
+              return (
+                <button
+                  key={booth.id}
+                  onClick={(e) => { e.stopPropagation(); if (!isDraggingRef.current) addToRoute(booth); }}
+                  className="absolute pointer-events-auto transition-all duration-200 rounded-lg"
+                  style={{
+                    top:    booth.overlay.top,
+                    left:   booth.overlay.left,
+                    width:  booth.overlay.width,
+                    height: booth.overlay.height,
+                    background: isSelected
+                      ? `${booth.color}40`
+                      : isInQueue ? `${booth.color}25` : 'transparent',
+                    border: isSelected
+                      ? `2px solid ${booth.color}`
+                      : isInQueue ? `2px solid ${booth.color}60` : '2px solid transparent',
+                    boxShadow: isSelected ? `0 0 20px ${booth.color}60` : 'none',
+                    opacity: isMoving
+                      ? isSelected ? 1 : isInQueue ? 0.6 : 0
+                      : 1,
+                    cursor: isMoving ? 'not-allowed' : 'pointer',
+                    transition: 'opacity 0.3s ease, background 0.2s, border 0.2s',
+                  }}
+                  onMouseEnter={e => {
+                    if (!isSelected && !isMoving) {
+                      e.currentTarget.style.background = `${booth.color}20`;
+                      e.currentTarget.style.border = `2px solid ${booth.color}60`;
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (!isSelected && !isInQueue) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.border = '2px solid transparent';
+                    } else if (!isSelected && isInQueue) {
+                      e.currentTarget.style.background = `${booth.color}20`;
+                      e.currentTarget.style.border = `2px solid ${booth.color}60`;
+                    }
+                  }}
+                />
+              );
+            })}
+          </div>
         </div>
 
         {/* BOTTOM INFO BAR */}
@@ -754,11 +744,38 @@ const adjustZoom = (d: number) => {
                   {isManualPaused ? '▶ Tiếp tục' : '⏸ Tạm dừng'}
                 </button>
                 <button onClick={cancelNav}
-                  className="flex-1 py-3.5 rounded-xl text-[13px] font-bold text-red-300 bg-red-500/15 hover:bg-red-500/25 border border-red-500/25 transition-all flex items-center justify-center gap-1.5">
+                  className="flex-1 py-3.5 rounded-xl text-[13px] font-bold text-white bg-red-600 hover:bg-red-500 active:bg-red-700 transition-all shadow-lg shadow-red-600/30 flex items-center justify-center gap-1.5">
                   <RotateCcw className="w-4 h-4" /> Huỷ lộ trình
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── CONFIRM CANCEL DIALOG ── */}
+      {showConfirmCancel && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#0a0f1e] border border-red-500/20 rounded-2xl p-6 shadow-2xl w-80 flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-500/15 border border-red-500/25 flex items-center justify-center text-xl">⚠️</div>
+              <div>
+                <div className="text-sm font-bold text-white">Huỷ lộ trình?</div>
+                <div className="text-[11px] text-slate-400">Robot sẽ dừng lại ngay lập tức</div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowConfirmCancel(false)}
+                className="flex-1 py-3 rounded-xl text-sm font-bold text-slate-300 bg-white/[0.05] hover:bg-white/[0.1] transition-all">
+                Không
+              </button>
+              <button
+                onClick={confirmCancel}
+                className="flex-1 py-3 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-500 transition-all">
+                Huỷ lộ trình
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -819,7 +836,7 @@ const adjustZoom = (d: number) => {
                     className="w-full py-3 rounded-xl text-sm font-bold text-white bg-sky-600 hover:bg-sky-500 transition-all flex items-center justify-center gap-2">
                     <Navigation className="w-4 h-4" /> Tiếp tục lộ trình
                   </button>
-                  <button onClick={() => { setFailedDialog(null); cancelNav(); setRouteQueue([]); setGoalPos(null); setGoalRos(null); setSelectedBooth(null); setNavStatus('idle'); }}
+                  <button onClick={() => { setFailedDialog(null); confirmCancel(); }}
                     className="w-full py-3 rounded-xl text-sm font-bold text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/15 transition-all flex items-center justify-center gap-2">
                     <Trash2 className="w-4 h-4" /> Huỷ toàn bộ lộ trình
                   </button>
