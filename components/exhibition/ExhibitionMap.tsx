@@ -318,14 +318,36 @@ export function ExhibitionMap() {
           return prev;
         });
         break;
-      case 'CANCELING':  setNavStatus('canceling'); setNavMessage('Đang dừng robot...'); break;
+      case 'CANCELING':
+        setNavStatus('canceling');
+        setNavMessage('Đang dừng robot...');
+        break;
       case 'CANCELED':
         setNavStatus('idle'); setGoalPos(null); setGoalRos(null);
         setSelectedBooth(null); setIsManualPaused(false); setNavMessage('');
         setShowCancelDialog(true);
         break;
       case 'ACCEPTED':
-        setNavStatus(prev => prev === 'moving' ? 'moving' : 'queued'); 
+        setNavStatus(prev => prev === 'moving' ? 'moving' : 'queued');
+        setNavMessage('Robot đã nhận lệnh, đang chuẩn bị...');
+        break;
+      case 'QUEUED_WHILE_PAUSED':
+        setNavStatus('queued');
+        setNavMessage('Robot đang tạm dừng, chờ tiếp tục...');
+        break;
+      case 'PREEMPTED':
+        setNavStatus('queued');
+        setNavMessage('Task bị ngắt, đang xếp lại hàng...');
+        break;
+      case 'PREEMPTED_BY_DOCK':
+        setNavStatus('queued');
+        setNavMessage('Robot về sạc pin, task sẽ tiếp tục sau...');
+        break;
+      case 'PAUSED':
+        setNavStatus('queued');
+        setNavMessage('Task bị tạm dừng bởi operator...');
+        setIsManualPaused(true);
+        setManualPaused(true);
         break;
       case 'FAILED': {
         setRouteQueue(prev => {
@@ -349,8 +371,12 @@ export function ExhibitionMap() {
         break;
       }
       case 'REJECTED':
+        setNavStatus('idle'); setRouteQueue([]); setGoalPos(null); setGoalRos(null); setSelectedBooth(null);
+        setNavMessage('Lệnh bị từ chối (robot đang sạc hoặc E-stop)');
+        break;
       case 'NAV_UNAVAILABLE':
         setNavStatus('idle'); setRouteQueue([]); setGoalPos(null); setGoalRos(null); setSelectedBooth(null);
+        setNavMessage('Navigation không khả dụng!');
         break;
     }
   }, [feedback]);
@@ -488,6 +514,15 @@ export function ExhibitionMap() {
     }, queue.length * 150 + 200);
   }, [publishCommand]);
 
+  // Khi không có điểm nào trong lộ trình: cho robot chuyển sang chế độ
+  // di chuyển tự do (patrol) bằng cách pause rồi resume ngay sau đó.
+  const goFreeRoam = () => {
+    publishCommand('robot/cmd/pause', {});
+    setTimeout(() => {
+      publishCommand('robot/cmd/resume', {});
+    }, 150);
+  };
+
   const togglePause = () => {
     if (getDrawerOpen()) {
       setIsManualPaused(false); setManualPaused(false); return;
@@ -499,6 +534,7 @@ export function ExhibitionMap() {
     }
   };
 
+  // Mở dialog xác nhận thay vì huỷ ngay
   const cancelNav = () => setShowConfirmCancel(true);
 
   const confirmCancel = () => {
@@ -585,6 +621,12 @@ export function ExhibitionMap() {
                 <button className="p-1.5 text-amber-400 hover:text-amber-300 hover:bg-amber-500/20 rounded transition-colors" onClick={resetMap}><Maximize className="w-3.5 h-3.5" /></button>
               </div>
             </div>
+            {isNavActive && (
+              <button onClick={cancelNav}
+                className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-red-500/15 border border-red-500/25 rounded-lg text-[11px] text-red-300 font-semibold hover:bg-red-500/25 transition pointer-events-auto">
+                <RotateCcw className="w-3 h-3" /> Huỷ điều hướng
+              </button>
+            )}
           </div>
         </div>
 
@@ -750,20 +792,39 @@ export function ExhibitionMap() {
             )}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-white/[0.05] space-y-3">
-            <div className="flex gap-2">
-              {isNavActive ? (
+          <div className="pt-4 border-t border-white/[0.07] mt-2">
+            {navStatus === 'idle' || navStatus === 'arrived' ? (
+              <>
+                <div className="flex justify-between text-xs text-slate-500 mb-3">
+                  <span>Tổng số điểm:</span>
+                  <span className="font-bold text-white">{routeQueue.length}</span>
+                </div>
+                {routeQueue.length === 0 ? (
+                  <button onClick={goFreeRoam}
+                    className="w-full py-3.5 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2">
+                    <Navigation className="w-4 h-4" /> Di chuyển tự do
+                  </button>
+                ) : (
+                  <button onClick={startRoute}
+                    className="w-full py-3.5 rounded-xl text-sm font-bold text-white bg-sky-600 hover:bg-sky-500 transition-all shadow-lg shadow-sky-600/20 flex items-center justify-center gap-2">
+                    <Navigation className="w-4 h-4" /> Bắt đầu di chuyển
+                  </button>
+                )}
+              </>
+            ) : (
+              <div className="flex gap-2">
                 <button onClick={togglePause}
-                  className="flex-1 h-12 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white font-bold flex items-center justify-center gap-2 hover:bg-white/[0.1] transition active:scale-95">
-                  {isManualPaused ? 'Tiếp tục' : 'Tạm dừng'}
+                  className={`flex-1 py-3.5 rounded-xl text-[13px] font-bold text-white transition-all flex items-center justify-center gap-1.5 ${
+                    isManualPaused ? 'bg-green-600 hover:bg-green-500' : 'bg-amber-500 hover:bg-amber-400'
+                  }`}>
+                  {isManualPaused ? '▶ Tiếp tục' : '⏸ Tạm dừng'}
                 </button>
-              ) : (
-                <button onClick={startRoute} disabled={routeQueue.length === 0}
-                  className="flex-1 h-12 rounded-xl bg-sky-500 text-white font-bold flex items-center justify-center gap-2 hover:bg-sky-400 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg shadow-sky-500/20 active:scale-95">
-                  <Navigation className="w-4 h-4" /> Bắt đầu di chuyển
+                <button onClick={cancelNav}
+                  className="flex-1 py-3.5 rounded-xl text-[13px] font-bold text-white bg-red-600 hover:bg-red-500 active:bg-red-700 transition-all shadow-lg shadow-red-600/30 flex items-center justify-center gap-1.5">
+                  <RotateCcw className="w-4 h-4" /> Huỷ lộ trình
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -787,6 +848,29 @@ export function ExhibitionMap() {
         </div>
       )}
 
+      {/* CANCEL DIALOG (sau khi robot xác nhận đã huỷ) */}
+      {showCancelDialog && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-[#0d1829] border border-sky-500/15 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 mx-auto">
+              <RotateCcw className="w-6 h-6 text-red-400" />
+            </div>
+            <h3 className="text-lg font-bold text-white text-center mb-2">Đã dừng lộ trình</h3>
+            <p className="text-slate-400 text-sm text-center mb-6">Robot đang chờ lệnh tiếp theo</p>
+            <div className="flex flex-col gap-2">
+              <button onClick={() => { setShowCancelDialog(false); startRoute(); }}
+                className="w-full py-3 rounded-xl text-sm font-bold text-white bg-sky-600 hover:bg-sky-500 transition-all flex items-center justify-center gap-2">
+                <Navigation className="w-4 h-4" /> Tiếp tục từ điểm hiện tại
+              </button>
+              <button onClick={() => { setShowCancelDialog(false); setRouteQueue([]); }}
+                className="w-full py-3 rounded-xl text-sm font-bold text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/15 transition-all flex items-center justify-center gap-2">
+                <Trash2 className="w-4 h-4" /> Xóa lộ trình
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* FAILED DIALOG */}
       {failedDialog && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
@@ -798,16 +882,35 @@ export function ExhibitionMap() {
             <p className="text-slate-400 text-sm text-center mb-6">
               Robot không thể di chuyển đến <b>{failedDialog.failedBoothName}</b>. Bạn muốn làm gì tiếp theo?
             </p>
-            <div className="space-y-3">
-              <button onClick={() => { setFailedDialog(null); startRoute(); }}
-                className="w-full py-3 rounded-xl bg-sky-500 text-white text-sm font-bold hover:bg-sky-400 transition">Thử lại</button>
-              {failedDialog.remainingQueue.length > 0 && (
-                <button onClick={() => { setFailedDialog(null); startRoute(); }}
-                  className="w-full py-3 rounded-xl bg-white/[0.05] text-white text-sm font-bold hover:bg-white/[0.1] transition">Bỏ qua và đi tiếp</button>
-              )}
-              <button onClick={() => { setFailedDialog(null); confirmCancel(); }}
-                className="w-full py-3 rounded-xl border border-white/[0.1] text-slate-400 text-sm font-bold hover:text-white transition">Dừng lộ trình</button>
-            </div>
+            {failedDialog.remainingQueue.length > 0 ? (
+              <div className="space-y-3">
+                <div className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.05] text-left">
+                  <div className="text-[10px] text-slate-500 mb-2">Robot sẽ tự di chuyển đến điểm tiếp theo:</div>
+                  <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto">
+                    {failedDialog.remainingQueue.map((item, idx) => (
+                      <div key={item.id} className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full bg-sky-500/15 text-sky-400 text-[9px] font-bold flex items-center justify-center shrink-0">{idx + 1}</div>
+                        <span className="text-[11px] text-white truncate">{item.boothName}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <button onClick={() => setFailedDialog(null)}
+                  className="w-full py-3 rounded-xl bg-sky-500 text-white text-sm font-bold hover:bg-sky-400 transition flex items-center justify-center gap-2">
+                  <Navigation className="w-4 h-4" /> Tiếp tục lộ trình
+                </button>
+                <button onClick={() => { setFailedDialog(null); confirmCancel(); }}
+                  className="w-full py-3 rounded-xl border border-red-500/15 bg-red-500/10 text-red-300 text-sm font-bold hover:bg-red-500/20 transition flex items-center justify-center gap-2">
+                  <Trash2 className="w-4 h-4" /> Huỷ toàn bộ lộ trình
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-[12px] text-slate-400 text-center">Không còn điểm nào trong lộ trình.</p>
+                <button onClick={() => setFailedDialog(null)}
+                  className="w-full py-3 rounded-xl bg-slate-700 text-white text-sm font-bold hover:bg-slate-600 transition">Đóng</button>
+              </div>
+            )}
           </div>
         </div>
       )}
