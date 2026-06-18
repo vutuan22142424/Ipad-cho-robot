@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ZoomIn, ZoomOut, Locate, Navigation, MapPin, RotateCcw, ChevronDown, Maximize, Trash2, GripVertical } from 'lucide-react';
-import { Reorder } from 'framer-motion';
+import { ZoomIn, ZoomOut, Locate, Navigation, MapPin, RotateCcw, ChevronDown, Maximize, Trash2, GripVertical, CheckCircle2 } from 'lucide-react';
+import { number, Reorder, AnimatePresence, motion } from 'framer-motion';
 import { useRobotMQTT, forceSetPausedManual, setNavigating, setManualPaused, getDrawerOpen } from '@/hooks/useRobotMQTT';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -17,7 +17,7 @@ const DISPLAY_S = 5;
 const MAP_W = MAP_PX_W * DISPLAY_S;
 const MAP_H = MAP_PX_H * DISPLAY_S;
 
-function rosToDisplay(rx: number, ry: number) {
+function rosToDisplay(rx: number, ry: number, ryaw: number) {
   const px = (rx - MAP_OX) / MAP_RES;
   const py = MAP_PX_H - (ry - MAP_OY) / MAP_RES;
   return { x: px * DISPLAY_S, y: py * DISPLAY_S };
@@ -27,71 +27,65 @@ function rosToDisplay(rx: number, ry: number) {
 //  BOOTHS
 // ═══════════════════════════════════════════════════════════════════════════════
 const BOOTHS = [
-  { id: 'WC', name: 'Nhà vệ sinh', ros_x: 7.76175, ros_y: 8.68889,
-    color: '#06b6d4', icon: '🚻', desc: 'Nhà vệ sinh',
-    overlay: { top: '15.85%', left: '7.15%', width: '7.27%', height: '29.21%' } },
-  { id: 'R1', name: 'Cocacola', ros_x: 14.0532, ros_y: 8.76577,
-    color: '#ef4444', icon: '🏪', desc: 'Gian hàng phòng 1',
-    overlay: { top: '15.63%', left: '18.02%', width: '10.59%', height: '29.33%' } },
-  { id: 'R2', name: 'Abbot', ros_x: 17.0131, ros_y: 6.67717,
-    color: '#f59e0b', icon: '🏪', desc: 'Gian hàng phòng 2',
-    overlay: { top: '66.32%', left: '18.18%', width: '16.82%', height: '26.60%' } },
-  { id: 'R3', name: 'PEPSI', ros_x: 18.7271, ros_y: 8.76577,
-    color: '#22c55e', icon: '🏪', desc: 'Gian hàng phòng 3',
-    overlay: { top: '15.63%', left: '29.09%', width: '11.86%', height: '29.33%' } },
-  { id: 'R4', name: 'Heineken', ros_x: 24.8787, ros_y: 8.76577,
-    color: '#3b82f6', icon: '🏪', desc: 'Gian hàng phòng 4',
-    overlay: { top: '15.63%', left: '41.36%', width: '14.05%', height: '29.33%' } },
-  { id: 'R5', name: 'Nutifood', ros_x: 26.3214, ros_y: 6.67717,
-    color: '#8b5cf6', icon: '🏪', desc: 'Gian hàng phòng 5',
-    overlay: { top: '66.32%', left: '35.68%', width: '24.23%', height: '26.60%' } },
-  { id: 'R6', name: 'Tiger', ros_x: 36.6769, ros_y: 8.76577,
-    color: '#ec4899', icon: '🏪', desc: 'Gian hàng phòng 6',
-    overlay: { top: '15.63%', left: '55.68%', width: '13.16%', height: '29.33%' } },
-  { id: 'R7', name: 'SABECO', ros_x: 41.8303, ros_y: 8.76577,
-    color: '#14b8a6', icon: '🏪', desc: 'Gian hàng phòng 7',
-    overlay: { top: '15.63%', left: '69.20%', width: '20.23%', height: '29.33%' } },
-  { id: 'R8', name: 'Vinamilk', ros_x: 41.5576, ros_y: 6.67717,
-    color: '#eab308', icon: '🏪', desc: 'Gian hàng phòng 8',
-    overlay: { top: '66.32%', left: '60.23%', width: '29.23%', height: '26.60%' } },
-].map(b => ({ ...b, ...rosToDisplay(b.ros_x, b.ros_y) }));
+  { id: 'WC', name: 'Nhà vệ sinh', ros_x: 7.76175, ros_y: 8.68889, yaw: 1.5708,
+    color: '#ebebe1', icon: '🚻', desc: 'Nhà vệ sinh',
+    overlay: { top: '14.22%',left: '6.66%',width: '8.32%',height: '30.80%' } },
 
-const ROBOT_START_ROS = { x: 2.0, y: 7.6 };
+  { id: 'R1', name: 'Cocacola', ros_x: 14.0532, ros_y: 8.76577,  yaw: 1.5708,
+    color: '#ebebe1', icon: '🏪', desc: 'Gian hàng phòng 1',
+    overlay: {  top: '14.08%', left: '15.61%', width: '12.20%', height: '30.58%' } },
+
+  { id: 'R2', name: 'PEPSI', ros_x: 18.7271, ros_y: 8.76577, yaw: 1.5708,
+    color: '#ebebe1', icon: '🏪', desc: 'Gian hàng phòng 2',
+    overlay: { top: '14.08%', left: '28.55%', width: '9.59%', height: '30.58%' } },
+
+  { id: 'R3', name: 'Red Bull', ros_x:24.8787, ros_y: 8.76577, yaw: 1.5708,
+    color: '#ebebe1', icon: '🏪', desc: 'Gian hàng phòng 3',
+    overlay: {  top: '14.08%', left: '38.64%', width: '10.73%', height: '30.58%' } },
+
+  { id: 'R4', name: 'Heineken', ros_x: 31.4316, ros_y: 8.76577, yaw: 1.5708, ///////////////////// nhớ sửa
+    color: '#ebebe1', icon: '🏪', desc: 'Gian hàng phòng 4',
+    overlay: {  top: '14.08%', left: '49.89%', width: '9.91%', height: '30.58%' } },
+
+  { id: 'R5', name: 'Tiger', ros_x: 36.6769, ros_y: 8.76577, yaw: 1.5708,
+    color: '#ebebe1', icon: '🏪', desc: 'Gian hàng phòng 5',
+    overlay: { top: '14.08%', left: '60.32%', width: '8.27%', height: '30.58%' } },
+
+  { id: 'R6', name: 'SABECO', ros_x: 41.8303, ros_y: 8.76577, yaw: 1.5708,
+    color: '#ebebe1', icon: '🏪', desc: 'Gian hàng phòng 6',
+    overlay: { top: '14.08%', left: '69.20%', width: '20.45%', height: '30.58%' } },
+
+  { id: 'R7', name: 'Abbott', ros_x: 17.0131, ros_y: 6.67717, yaw: -1.5708,
+    color: '#ebebe1', icon: '🏪', desc: 'Gian hàng phòng 7',
+    overlay: { top: '67.35%', left: '17.86%', width: '16.18%', height: '27.34%' } },
+
+  { id: 'R8', name: 'Nutifood', ros_x: 26.3214, ros_y: 6.67717, yaw: -1.5708,
+    color: '#ebebe1', icon: '🏪', desc: 'Gian hàng phòng 8',
+    overlay: {  top: '67.35%', left: '34.48%', width: '16.32%', height: '27.34%' } },
+
+  { id: 'R9', name: 'Nestle', ros_x: 35.6886, ros_y: 6.67717, yaw: -1.5708,  
+    color: '#ebebe1', icon: '🏪', desc: 'Gian hàng phòng 7',
+    overlay: { top: '67.35%', left: '51.16%', width: '17.27%', height: '27.34%' } },
+
+  { id: 'R10', name: 'Vinamilk', ros_x: 41.5576, ros_y: 6.67717, yaw: -1.5708,
+    color: '#ebebe1', icon: '🏪', desc: 'Gian hàng phòng 7',
+    overlay: { top: '67.35%', left: '68.91%', width: '21.00%', height: '27.34%' } }, 
+
+  { id: 'R11', name: 'door1', ros_x: 4.56487, ros_y: 7.24993, yaw: 0,
+    color: '#ebebe1', icon: '🏪', desc: 'Gian hàng phòng 7',
+    overlay: { top: '50.35%', left: '6.91%', width: '5.00%', height: '10.34%' } },
+
+  { id: 'R12', name: 'door2', ros_x: 49.7373, ros_y: 8.30956, yaw: 3.1459,
+    color: '#ebebe1', icon: '🏪', desc: 'Gian hàng phòng 7',
+    overlay: { top: '50.35%', left: '84.91%', width: '5.00%', height: '10.34%' } },   
+].map(b => ({ ...b, ...rosToDisplay(b.ros_x, b.ros_y, b.yaw) }));
+
+
+const ROBOT_START_ROS = { x: 6.62135, y: 6.5234, yaw:1.5628 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  CANVAS DRAW HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
-function drawPath(
-  ctx: CanvasRenderingContext2D, scale: number,
-  from: { x: number; y: number }, to: { x: number; y: number },
-  fromRos: { x: number; y: number }, toRos: { x: number; y: number },
-  dashOffset: number
-) {
-  ctx.strokeStyle = 'rgba(56,189,248,0.55)';
-  ctx.lineWidth = 2.5 / scale;
-  ctx.setLineDash([8 / scale, 5 / scale]);
-  ctx.lineDashOffset = -dashOffset / scale;
-  ctx.shadowColor = 'rgba(56,189,248,0.4)';
-  ctx.shadowBlur = 4 / scale;
-  ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(to.x, to.y); ctx.stroke();
-  ctx.setLineDash([]); ctx.lineDashOffset = 0; ctx.shadowBlur = 0;
-
-  const dist = Math.hypot(toRos.x - fromRos.x, toRos.y - fromRos.y);
-  const mx = (from.x + to.x) / 2, my = (from.y + to.y) / 2;
-  const label = dist.toFixed(1) + 'm';
-  ctx.font = `${9 / scale}px monospace`;
-  const fw = ctx.measureText(label).width;
-  const pw = fw + 10 / scale, ph = 14 / scale;
-  ctx.fillStyle = 'rgba(7,12,24,0.88)';
-  ctx.strokeStyle = 'rgba(56,189,248,0.3)';
-  ctx.lineWidth = 0.5 / scale;
-  ctx.beginPath(); (ctx as any).roundRect(mx - pw / 2, my - ph / 2, pw, ph, 3 / scale); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#38bdf8';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(label, mx, my);
-  ctx.textBaseline = 'alphabetic';
-}
-
 function drawRobot(
   ctx: CanvasRenderingContext2D, scale: number,
   pos: { x: number; y: number }, rosPos: { x: number; y: number },
@@ -99,32 +93,34 @@ function drawRobot(
 ) {
   const r = 16 / scale;
   const color = status === 'arrived' ? '#22c55e' : status === 'canceling' ? '#ef4444' : '#fbbf24';
-  for (let i = 0; i < 2; i++) {
-    const progress = (pulseT + i * 0.5) % 1;
-    const pr = r * (1 + progress * 1.6);
-    const alpha = 0.45 * (1 - progress);
-    ctx.beginPath(); ctx.arc(pos.x, pos.y, pr, 0, Math.PI * 2);
+  
+  for (let i = 0; i < 3; i++) {
+    const progress = (pulseT + i * 0.33) % 1;
+    const pr = r * (1 + progress * 2.2);
+    const alpha = 0.6 * (1 - progress);
+    ctx.beginPath(); 
+    ctx.arc(pos.x, pos.y, pr, 0, Math.PI * 2);
     ctx.strokeStyle = color + Math.round(alpha * 255).toString(16).padStart(2, '0');
-    ctx.lineWidth = 1 / scale; ctx.stroke();
+    ctx.lineWidth = 1.5 / scale; 
+    ctx.stroke();
   }
-  ctx.shadowColor = color; ctx.shadowBlur = 20 / scale;
-  ctx.beginPath(); ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
-  ctx.fillStyle = color; ctx.fill();
-  ctx.strokeStyle = '#070c18'; ctx.lineWidth = 2.5 / scale; ctx.stroke();
+
+  ctx.shadowColor = color; 
+  ctx.shadowBlur = (25 + Math.sin(pulseT * Math.PI * 2) * 10) / scale;
+  ctx.beginPath(); 
+  ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
+  ctx.fillStyle = color; 
+  ctx.fill();
+  
+  ctx.strokeStyle = '#070c18'; 
+  ctx.lineWidth = 2.5 / scale; 
+  ctx.stroke();
+  
   ctx.shadowBlur = 0;
   ctx.font = `${14 / scale}px sans-serif`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center'; 
+  ctx.textBaseline = 'middle';
   ctx.fillText('🤖', pos.x, pos.y + 0.5 / scale);
-  // const coord = `(${rosPos.x.toFixed(2)}, ${rosPos.y.toFixed(2)})`;
-  // ctx.font = `${8 / scale}px monospace`;
-  // const fw = ctx.measureText(coord).width;
-  // const pw = fw + 10 / scale, ph = 14 / scale;
-  // const ly = pos.y + r + 6 / scale;
-  // ctx.fillStyle = 'rgba(7,12,24,0.92)';
-  // ctx.strokeStyle = color + '50'; ctx.lineWidth = 0.5 / scale;
-  // ctx.beginPath(); (ctx as any).roundRect(pos.x - pw / 2, ly, pw, ph, 3 / scale); ctx.fill(); ctx.stroke();
-  // ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  // ctx.fillText(coord, pos.x, ly + ph / 2);
   ctx.textBaseline = 'alphabetic';
 }
 
@@ -132,13 +128,13 @@ function drawRobot(
 //  TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 type NavStatus = 'idle' | 'planning' | 'moving' | 'canceling' | 'queued' | 'arrived';
-type RouteItem = { id: string; x: number; y: number; ros_x: number; ros_y: number; boothId: string; boothName: string; commandId?: string };
+type RouteItem = { id: string; x: number; y: number; ros_x: number; ros_y: number; boothId: string; boothName: string; commandId?: string; yaw: number };
 type FailedDialogState = { failedBoothName: string; remainingQueue: RouteItem[] } | null;
 
 const STATUS_DOT: Record<NavStatus, string> = {
   idle:      'bg-slate-500',
   planning:  'bg-yellow-400 animate-pulse',
-  moving:    'bg-green-400 animate-pulse',
+  moving:    'bg-green-400 animate-pulse-glow',
   canceling: 'bg-red-400 animate-pulse',
   queued:    'bg-yellow-400 animate-pulse',
   arrived:   'bg-green-400',
@@ -172,8 +168,8 @@ export function ExhibitionMap() {
   const animRef                     = useRef<number>(0);
   const pulseRef                    = useRef(0);
   const mapImageRef                 = useRef<HTMLImageElement | null>(null);
-
-  // Refs để sync ngay lập tức không chờ re-render
+  const [transitionMessage, setTransitionMessage] = useState('');
+  
   const scaleRef  = useRef(0.2);
   const offsetRef = useRef({ x: 0, y: 0 });
 
@@ -186,13 +182,12 @@ export function ExhibitionMap() {
     setOffset(newOffset);
   };
 
-  // ── Pinch zoom refs ──
   const lastTouchDist   = useRef<number | null>(null);
   const lastPinchCenter = useRef<{ x: number; y: number } | null>(null);
-  const isPinching      = useRef(false);      // ← đang pinch không?
-  const pinchEndTime    = useRef<number>(0);  // ← thời điểm kết thúc pinch
+  const isPinching      = useRef(false);
+  const pinchEndTime    = useRef<number>(0);
 
-  const [robotPos, setRobotPos] = useState(rosToDisplay(ROBOT_START_ROS.x, ROBOT_START_ROS.y));
+  const [robotPos, setRobotPos] = useState(rosToDisplay(ROBOT_START_ROS.x, ROBOT_START_ROS.y, ROBOT_START_ROS.yaw));
   const [robotRos, setRobotRos] = useState(ROBOT_START_ROS);
 
   const [goalPos, setGoalPos]             = useState<{ x: number; y: number } | null>(null);
@@ -201,7 +196,7 @@ export function ExhibitionMap() {
   const [navStatus, setNavStatus]         = useState<NavStatus>('idle');
   const [navMessage, setNavMessage]       = useState('');
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [showConfirmCancel, setShowConfirmCancel] = useState(false); // ← dialog xác nhận huỷ
+  const [showConfirmCancel, setShowConfirmCancel] = useState(false);
   const [failedDialog, setFailedDialog]   = useState<FailedDialogState>(null);
 
   const [isModalOpen, setIsModalOpen]       = useState(false);
@@ -212,10 +207,9 @@ export function ExhibitionMap() {
   useEffect(() => { routeQueueRef.current = routeQueue; }, [routeQueue]);
   useEffect(() => { setNavigating(isModalOpen); }, [isModalOpen]);
 
-  // Load ảnh bản đồ
   useEffect(() => {
     const img = new Image();
-    img.src = '/Picture1.png';
+    img.src = '/mapreal.png';
     img.onload = () => { mapImageRef.current = img; };
   }, []);
 
@@ -224,10 +218,9 @@ export function ExhibitionMap() {
     stateRef.current = { robotPos, robotRos, goalPos, goalRos, navStatus, scale, offset };
   }, [robotPos, robotRos, goalPos, goalRos, navStatus, scale, offset]);
 
-  // ─── Canvas render loop ───
   useEffect(() => {
     function loop() {
-      pulseRef.current = (pulseRef.current + 0.016) % 1;
+      pulseRef.current = (pulseRef.current + 0.01) % 1;
       const canvas = canvasRef.current;
       const container = mapContainerRef.current;
       if (!canvas || !container) { animRef.current = requestAnimationFrame(loop); return; }
@@ -242,9 +235,6 @@ export function ExhibitionMap() {
       ctx.scale(scale, scale);
       if (mapImageRef.current) {
         ctx.drawImage(mapImageRef.current, 0, 0, MAP_W, MAP_H);
-      }
-      if (goalPos && goalRos) {
-        drawPath(ctx, scale, robotPos, goalPos, robotRos, goalRos, pulseRef.current * 13);
       }
       drawRobot(ctx, scale, robotPos, robotRos, pulseRef.current, navStatus);
       ctx.restore();
@@ -270,20 +260,54 @@ export function ExhibitionMap() {
       case 'SUCCEEDED':
         setNavMessage('');
         setRouteQueue(prev => {
+          const arrived = prev.find(item => item.commandId === command_id);
           const remaining = prev.filter(item => item.commandId !== command_id);
+          
           if (remaining.length === 0) {
-            setSelectedBooth(null); setGoalPos(null); setGoalRos(null); setNavStatus('arrived');
+            setGoalPos(null);
+            setGoalRos(null);
+            setNavStatus('arrived');
+
+            let countdown = 10;
+            setTransitionMessage(`Đã hoàn thành tuyến tham quan. Tự đóng sau ${countdown}s...`);
+
+            const timer = setInterval(() => {
+              countdown--;
+              if (countdown > 0) {
+                setTransitionMessage(`Đã hoàn thành tuyến tham quan. Tự đóng sau ${countdown}s...`);
+              } else {
+                clearInterval(timer);
+                setTransitionMessage('');
+                setSelectedBooth(null);
+                setNavStatus('idle');
+              }
+            }, 1000);
           } else {
-            setGoalPos({ x: remaining[0].x, y: remaining[0].y });
-            setGoalRos({ x: remaining[0].ros_x, y: remaining[0].ros_y });
-            setSelectedBooth(remaining[0].boothId);
+            const next = remaining[0];
+            let countdown = 10;
+            setTransitionMessage(`Đã đến ${arrived?.boothName || 'đích'}. Chuẩn bị đến ${next.boothName} sau ${countdown}s...`);
+            
+            const timer = setInterval(() => {
+              countdown--;
+              if (countdown > 0) {
+                setTransitionMessage(`Đã đến ${arrived?.boothName || 'đích'}. Chuẩn bị đến ${next.boothName} sau ${countdown}s...`);
+              } else {
+                clearInterval(timer);
+                setTransitionMessage('');
+              }
+            }, 1000);
+
+            setGoalPos({ x: next.x, y: next.y });
+            setGoalRos({ x: next.ros_x, y: next.ros_y });
+            setSelectedBooth(next.boothId);
             setNavStatus('moving');
           }
           return remaining;
         });
         break;
       case 'EXECUTING':
-        setNavMessage(''); setNavStatus('moving');
+        setNavMessage(''); 
+        setNavStatus('moving');
         setRouteQueue(prev => {
           const current = prev.find(item => item.commandId === command_id) ?? prev[0];
           if (current) {
@@ -300,11 +324,9 @@ export function ExhibitionMap() {
         setSelectedBooth(null); setIsManualPaused(false); setNavMessage('');
         setShowCancelDialog(true);
         break;
-      case 'ACCEPTED':            setNavStatus('queued'); setNavMessage('Robot đã nhận lệnh, đang chuẩn bị...'); break;
-      case 'QUEUED_WHILE_PAUSED': setNavStatus('queued'); setNavMessage('Robot đang tạm dừng, chờ tiếp tục...'); break;
-      case 'PREEMPTED':           setNavStatus('queued'); setNavMessage('Task bị ngắt, đang xếp lại hàng...'); break;
-      case 'PREEMPTED_BY_DOCK':   setNavStatus('queued'); setNavMessage('Robot về sạc pin, task sẽ tiếp tục sau...'); break;
-      case 'PAUSED':              setNavStatus('queued'); setNavMessage('Task bị tạm dừng bởi operator...'); break;
+      case 'ACCEPTED':
+        setNavStatus(prev => prev === 'moving' ? 'moving' : 'queued'); 
+        break;
       case 'FAILED': {
         setRouteQueue(prev => {
           const failedItem = prev.find(item => item.commandId === command_id);
@@ -327,12 +349,8 @@ export function ExhibitionMap() {
         break;
       }
       case 'REJECTED':
-        setNavStatus('idle'); setRouteQueue([]); setGoalPos(null); setGoalRos(null); setSelectedBooth(null);
-        setNavMessage('Lệnh bị từ chối (robot đang sạc hoặc E-stop)');
-        break;
       case 'NAV_UNAVAILABLE':
         setNavStatus('idle'); setRouteQueue([]); setGoalPos(null); setGoalRos(null); setSelectedBooth(null);
-        setNavMessage('Navigation không khả dụng!');
         break;
     }
   }, [feedback]);
@@ -341,7 +359,6 @@ export function ExhibitionMap() {
   const handleDown = (e: React.MouseEvent | React.TouchEvent) => {
     if ('touches' in e) {
       if (e.touches.length === 2) {
-        // Bắt đầu pinch
         isPinching.current = true;
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
@@ -352,9 +369,8 @@ export function ExhibitionMap() {
         };
         return;
       }
-      // 1 ngón — chỉ bắt đầu pan nếu không đang trong cooldown pinch
       const now = Date.now();
-      if (now - pinchEndTime.current < 300) return; // ← bỏ qua 300ms sau pinch
+      if (now - pinchEndTime.current < 300) return;
       const cx = e.touches[0].clientX;
       const cy = e.touches[0].clientY;
       isDraggingRef.current = false;
@@ -372,7 +388,6 @@ export function ExhibitionMap() {
   const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
     if ('touches' in e) {
       if (e.touches.length === 2) {
-        // Pinch zoom
         isPinching.current = true;
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
@@ -398,7 +413,6 @@ export function ExhibitionMap() {
         return;
       }
 
-      // 1 ngón — bỏ qua nếu vừa pinch xong
       const now = Date.now();
       if (isPinching.current || now - pinchEndTime.current < 300) return;
 
@@ -423,26 +437,21 @@ export function ExhibitionMap() {
 
   const handleUp = (e: React.TouchEvent | React.MouseEvent) => {
     if ('changedTouches' in e) {
-      // Khi ngón tay bỏ ra
-      const remaining = e.touches.length; // số ngón còn lại
-
+      const remaining = e.touches.length;
       if (remaining === 0) {
-        // Bỏ hết ngón → kết thúc pinch hoàn toàn
         if (isPinching.current) {
-          pinchEndTime.current = Date.now(); // ← ghi lại thời điểm kết thúc
+          pinchEndTime.current = Date.now();
           isPinching.current = false;
         }
         lastTouchDist.current   = null;
         lastPinchCenter.current = null;
       } else if (remaining === 1 && isPinching.current) {
-        // Còn 1 ngón sau pinch → reset dragStart để không jump
         isPinching.current    = false;
-        pinchEndTime.current  = Date.now(); // ← cooldown
+        pinchEndTime.current  = Date.now();
         lastTouchDist.current = null;
-        // Reset drag origin về ngón còn lại
         dragStart.current = {
-          x: e.touches[0].clientX - offsetRef.current.x,
-          y: e.touches[0].clientY - offsetRef.current.y,
+           x: e.touches[0].clientX - offsetRef.current.x,
+           y: e.touches[0].clientY - offsetRef.current.y,
         };
         clickOrigin.current = {
           x: e.touches[0].clientX,
@@ -450,11 +459,9 @@ export function ExhibitionMap() {
         };
       }
     }
-
     setTimeout(() => { isDraggingRef.current = false; setIsDragging(false); }, 80);
   };
 
-  // ─── Navigation ───
   const startRoute = useCallback(() => {
     const queue = routeQueueRef.current;
     if (queue.length === 0) return;
@@ -469,7 +476,7 @@ export function ExhibitionMap() {
       setTimeout(() => {
         publishCommand('robot/cmd/service_request', {
           command_id: commandId,
-          data: { x: goal.ros_x, y: goal.ros_y, yaw: 0, customer_id: 'tablet', timeout_sec: 10, return_to_patrol: false, priority: 5, speed_limit_ms: 0.5 },
+          data: { x: goal.ros_x, y: goal.ros_y, yaw: goal.yaw, customer_id: 'tablet', timeout_sec: 10, return_to_patrol: false, priority: 5, speed_limit_ms: 0.5 },
         });
       }, idx * 150);
       return { ...goal, commandId };
@@ -492,10 +499,8 @@ export function ExhibitionMap() {
     }
   };
 
-  // ← Mở dialog xác nhận thay vì window.confirm
   const cancelNav = () => setShowConfirmCancel(true);
 
-  // ← Thực sự huỷ sau khi xác nhận
   const confirmCancel = () => {
     setShowConfirmCancel(false);
     publishCommand('robot/cmd/cancel_request', { command_id: '*' });
@@ -514,11 +519,12 @@ export function ExhibitionMap() {
     if (navActive) return;
     if (!isModalOpen) setIsModalOpen(true);
     setRouteQueue(prev => {
-      if (prev[prev.length - 1]?.boothId === booth.id) return prev;
+      if (prev.some(r => r.boothId === booth.id)) return prev;
       return [...prev, {
         id: Math.random().toString(36).substr(2, 9),
         x: booth.x, y: booth.y,
         ros_x: booth.ros_x, ros_y: booth.ros_y,
+        yaw: booth.yaw,
         boothId: booth.id, boothName: booth.name
       }];
     });
@@ -545,6 +551,15 @@ export function ExhibitionMap() {
       ? 'fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-md p-4 md:p-6 flex flex-col md:flex-row gap-4'
       : 'relative w-full h-full bg-[#070c18] rounded-2xl overflow-hidden border border-sky-500/20 shadow-2xl flex flex-col'
     }>
+      <style jsx global>{`
+        @keyframes pulse-glow {
+          0%, 100% { opacity: 1; filter: drop-shadow(0 0 2px #4ade80); }
+          50% { opacity: 0.7; filter: drop-shadow(0 0 8px #4ade80); }
+        }
+        .animate-pulse-glow {
+          animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+      `}</style>
       <div className="relative flex-1 w-full h-full rounded-2xl overflow-hidden border border-sky-500/15 shadow-2xl flex flex-col bg-[#070c18] shrink-0"
         onClick={(e) => { if (!isModalOpen && !isDragging && !(e.target as HTMLElement).closest('button')) setIsModalOpen(true); }}>
 
@@ -570,12 +585,6 @@ export function ExhibitionMap() {
                 <button className="p-1.5 text-amber-400 hover:text-amber-300 hover:bg-amber-500/20 rounded transition-colors" onClick={resetMap}><Maximize className="w-3.5 h-3.5" /></button>
               </div>
             </div>
-            {isNavActive && (
-              <button onClick={cancelNav}
-                className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-red-500/15 border border-red-500/25 rounded-lg text-[11px] text-red-300 font-semibold hover:bg-red-500/25 transition pointer-events-auto">
-                <RotateCcw className="w-3 h-3" /> Huỷ điều hướng
-              </button>
-            )}
           </div>
         </div>
 
@@ -592,6 +601,38 @@ export function ExhibitionMap() {
             className="absolute inset-0 w-full h-full"
             style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
           />
+
+          {/* CENTERED TRANSITION MESSAGE */}
+          <AnimatePresence>
+            {transitionMessage && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none p-6"
+              >
+                <div className="bg-slate-900/80 backdrop-blur-xl border border-emerald-500/30 rounded-3xl p-8 shadow-[0_0_50px_rgba(16,185,129,0.2)] flex flex-col items-center gap-4 max-w-sm w-full text-center">
+                  <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-400 animate-bounce" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-bold text-white tracking-tight">Thông báo</h3>
+                    <p className="text-emerald-400/90 font-medium text-sm leading-relaxed">
+                      {transitionMessage}
+                    </p>
+                  </div>
+                  <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden mt-2">
+                    <motion.div 
+                      initial={{ width: "100%" }}
+                      animate={{ width: "0%" }}
+                      transition={{ duration: 10, ease: "linear" }}
+                      className="h-full bg-emerald-500"
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* ROOM BUTTON OVERLAYS */}
           <div
@@ -631,21 +672,6 @@ export function ExhibitionMap() {
                     cursor: isMoving ? 'not-allowed' : 'pointer',
                     transition: 'opacity 0.3s ease, background 0.2s, border 0.2s',
                   }}
-                  onMouseEnter={e => {
-                    if (!isSelected && !isMoving) {
-                      e.currentTarget.style.background = `${booth.color}20`;
-                      e.currentTarget.style.border = `2px solid ${booth.color}60`;
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    if (!isSelected && !isInQueue) {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.border = '2px solid transparent';
-                    } else if (!isSelected && isInQueue) {
-                      e.currentTarget.style.background = `${booth.color}20`;
-                      e.currentTarget.style.border = `2px solid ${booth.color}60`;
-                    }
-                  }}
                 />
               );
             })}
@@ -666,7 +692,7 @@ export function ExhibitionMap() {
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold text-white">{booth.name}</div>
                   <div className="text-[10px] text-slate-500">{navMessage || booth.desc}</div>
-                </div>
+                 </div>
                 <div className="text-right">
                   <div className={`text-[11px] font-bold ${infoEtaColor}`}>{infoEtaText}</div>
                   <div className="text-[9px] text-slate-600">
@@ -700,13 +726,14 @@ export function ExhibitionMap() {
               <Reorder.Group axis="y" values={routeQueue} onReorder={setRouteQueue} className="space-y-2">
                 {routeQueue.map((item, idx) => (
                   <Reorder.Item key={item.id} value={item}
-                    className="bg-white/[0.04] border border-white/[0.05] p-3 rounded-xl flex items-center gap-3 relative overflow-hidden group touch-none cursor-grab active:cursor-grabbing">
+                    className={`bg-white/[0.04] border border-white/[0.05] p-3 rounded-xl flex items-center gap-3 relative overflow-hidden group touch-none cursor-grab active:cursor-grabbing ${
+                      navStatus === 'moving' && selectedBooth === item.boothId ? 'animate-pulse-glow ring-1 ring-sky-500/50' : ''
+                    }`}>
                     <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-sky-500" />
                     <div className="flex items-center text-slate-600 hover:text-slate-300"><GripVertical className="w-5 h-5" /></div>
                     <div className="w-6 h-6 rounded-full bg-sky-500/15 text-sky-400 text-xs font-bold flex items-center justify-center shrink-0">{idx + 1}</div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-bold text-white truncate">{item.boothName}</div>
-                      <div className="text-[10px] text-slate-600 font-mono">({item.ros_x.toFixed(2)}, {item.ros_y.toFixed(2)})</div>
                     </div>
                     <button
                       onPointerDown={(e) => e.stopPropagation()}
@@ -723,85 +750,38 @@ export function ExhibitionMap() {
             )}
           </div>
 
-          <div className="pt-4 border-t border-white/[0.07] mt-2">
-            {navStatus === 'idle' || navStatus === 'arrived' ? (
-              <>
-                <div className="flex justify-between text-xs text-slate-500 mb-3">
-                  <span>Tổng số điểm:</span>
-                  <span className="font-bold text-white">{routeQueue.length}</span>
-                </div>
+          <div className="mt-4 pt-4 border-t border-white/[0.05] space-y-3">
+            <div className="flex gap-2">
+              {isNavActive ? (
+                <button onClick={togglePause}
+                  className="flex-1 h-12 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white font-bold flex items-center justify-center gap-2 hover:bg-white/[0.1] transition active:scale-95">
+                  {isManualPaused ? 'Tiếp tục' : 'Tạm dừng'}
+                </button>
+              ) : (
                 <button onClick={startRoute} disabled={routeQueue.length === 0}
-                  className="w-full py-3.5 rounded-xl text-sm font-bold text-white bg-sky-600 hover:bg-sky-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg shadow-sky-600/20 flex items-center justify-center gap-2">
+                  className="flex-1 h-12 rounded-xl bg-sky-500 text-white font-bold flex items-center justify-center gap-2 hover:bg-sky-400 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg shadow-sky-500/20 active:scale-95">
                   <Navigation className="w-4 h-4" /> Bắt đầu di chuyển
                 </button>
-              </>
-            ) : (
-              <div className="flex gap-2">
-                <button onClick={togglePause}
-                  className={`flex-1 py-3.5 rounded-xl text-[13px] font-bold text-white transition-all flex items-center justify-center gap-1.5 ${
-                    isManualPaused ? 'bg-green-600 hover:bg-green-500' : 'bg-amber-500 hover:bg-amber-400'
-                  }`}>
-                  {isManualPaused ? '▶ Tiếp tục' : '⏸ Tạm dừng'}
-                </button>
-                <button onClick={cancelNav}
-                  className="flex-1 py-3.5 rounded-xl text-[13px] font-bold text-white bg-red-600 hover:bg-red-500 active:bg-red-700 transition-all shadow-lg shadow-red-600/30 flex items-center justify-center gap-1.5">
-                  <RotateCcw className="w-4 h-4" /> Huỷ lộ trình
-                </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── CONFIRM CANCEL DIALOG ── */}
+      {/* CONFIRM CANCEL DIALOG */}
       {showConfirmCancel && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#0a0f1e] border border-red-500/20 rounded-2xl p-6 shadow-2xl w-80 flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-500/15 border border-red-500/25 flex items-center justify-center text-xl">⚠️</div>
-              <div>
-                <div className="text-sm font-bold text-white">Huỷ lộ trình?</div>
-                <div className="text-[11px] text-slate-400">Robot sẽ dừng lại ngay lập tức</div>
-              </div>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-[#0d1829] border border-red-500/20 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 mx-auto">
+              <RotateCcw className="w-6 h-6 text-red-500" />
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowConfirmCancel(false)}
-                className="flex-1 py-3 rounded-xl text-sm font-bold text-slate-300 bg-white/[0.05] hover:bg-white/[0.1] transition-all">
-                Không
-              </button>
-              <button
-                onClick={confirmCancel}
-                className="flex-1 py-3 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-500 transition-all">
-                Huỷ lộ trình
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* CANCEL DIALOG */}
-      {showCancelDialog && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#0a0f1e] border border-sky-500/15 rounded-2xl p-6 shadow-2xl w-80 flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-500/15 border border-red-500/25 flex items-center justify-center">
-                <RotateCcw className="w-5 h-5 text-red-400" />
-              </div>
-              <div>
-                <div className="text-sm font-bold text-white">Đã dừng lộ trình</div>
-                <div className="text-[11px] text-slate-500">Robot đang chờ lệnh tiếp theo</div>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <button onClick={() => { setShowCancelDialog(false); startRoute(); }}
-                className="w-full py-3 rounded-xl text-sm font-bold text-white bg-sky-600 hover:bg-sky-500 transition-all flex items-center justify-center gap-2">
-                <Navigation className="w-4 h-4" /> Tiếp tục từ điểm hiện tại
-              </button>
-              <button onClick={() => { setShowCancelDialog(false); setRouteQueue([]); }}
-                className="w-full py-3 rounded-xl text-sm font-bold text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/15 transition-all flex items-center justify-center gap-2">
-                <Trash2 className="w-4 h-4" /> Xóa lộ trình
-              </button>
+            <h3 className="text-lg font-bold text-white text-center mb-2">Huỷ điều hướng?</h3>
+            <p className="text-slate-400 text-sm text-center mb-6">Bạn có chắc chắn muốn dừng robot và xoá toàn bộ lộ trình hiện tại không?</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowConfirmCancel(false)}
+                className="flex-1 py-3 rounded-xl bg-white/[0.05] text-white text-sm font-bold hover:bg-white/[0.1] transition">Quay lại</button>
+              <button onClick={confirmCancel}
+                className="flex-1 py-3 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition shadow-lg shadow-red-500/20">Xác nhận huỷ</button>
             </div>
           </div>
         </div>
@@ -809,46 +789,25 @@ export function ExhibitionMap() {
 
       {/* FAILED DIALOG */}
       {failedDialog && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#0a0f1e] border border-red-500/20 rounded-2xl p-6 shadow-2xl w-80 flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-500/15 border border-red-500/25 flex items-center justify-center text-xl">⚠️</div>
-              <div>
-                <div className="text-sm font-bold text-white">Không thể đến điểm</div>
-                <div className="text-[11px] text-red-400 font-medium">{failedDialog.failedBoothName}</div>
-              </div>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-[#0d1829] border border-red-500/20 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 mx-auto">
+              <MapPin className="w-6 h-6 text-red-500" />
             </div>
-            {failedDialog.remainingQueue.length > 0 ? (
-              <>
-                <div className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.05]">
-                  <div className="text-[10px] text-slate-500 mb-2">Robot sẽ tự di chuyển đến điểm tiếp theo:</div>
-                  <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto">
-                    {failedDialog.remainingQueue.map((item, idx) => (
-                      <div key={item.id} className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-sky-500/15 text-sky-400 text-[9px] font-bold flex items-center justify-center shrink-0">{idx + 1}</div>
-                        <span className="text-[11px] text-white truncate">{item.boothName}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <button onClick={() => setFailedDialog(null)}
-                    className="w-full py-3 rounded-xl text-sm font-bold text-white bg-sky-600 hover:bg-sky-500 transition-all flex items-center justify-center gap-2">
-                    <Navigation className="w-4 h-4" /> Tiếp tục lộ trình
-                  </button>
-                  <button onClick={() => { setFailedDialog(null); confirmCancel(); }}
-                    className="w-full py-3 rounded-xl text-sm font-bold text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/15 transition-all flex items-center justify-center gap-2">
-                    <Trash2 className="w-4 h-4" /> Huỷ toàn bộ lộ trình
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p className="text-[12px] text-slate-400 text-center">Không còn điểm nào trong lộ trình.</p>
-                <button onClick={() => setFailedDialog(null)}
-                  className="w-full py-3 rounded-xl text-sm font-bold text-white bg-slate-700 hover:bg-slate-600 transition-all">Đóng</button>
-              </>
-            )}
+            <h3 className="text-lg font-bold text-white text-center mb-2">Không thể đến đích</h3>
+            <p className="text-slate-400 text-sm text-center mb-6">
+              Robot không thể di chuyển đến <b>{failedDialog.failedBoothName}</b>. Bạn muốn làm gì tiếp theo?
+            </p>
+            <div className="space-y-3">
+              <button onClick={() => { setFailedDialog(null); startRoute(); }}
+                className="w-full py-3 rounded-xl bg-sky-500 text-white text-sm font-bold hover:bg-sky-400 transition">Thử lại</button>
+              {failedDialog.remainingQueue.length > 0 && (
+                <button onClick={() => { setFailedDialog(null); startRoute(); }}
+                  className="w-full py-3 rounded-xl bg-white/[0.05] text-white text-sm font-bold hover:bg-white/[0.1] transition">Bỏ qua và đi tiếp</button>
+              )}
+              <button onClick={() => { setFailedDialog(null); confirmCancel(); }}
+                className="w-full py-3 rounded-xl border border-white/[0.1] text-slate-400 text-sm font-bold hover:text-white transition">Dừng lộ trình</button>
+            </div>
           </div>
         </div>
       )}

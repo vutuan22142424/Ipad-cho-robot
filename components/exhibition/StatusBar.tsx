@@ -59,10 +59,10 @@ export function StatusBar() {
               {battery !== null ? `${battery.toFixed(0)}%` : '--%'}
             </span>
           </div>
-          <div className="flex items-center gap-1 bg-secondary/50 border border-border/30 rounded-full px-2 py-0.5">
+          {/* <div className="flex items-center gap-1 bg-secondary/50 border border-border/30 rounded-full px-2 py-0.5">
             <Users className="w-3 h-3 text-blue-400" />
             <span className="text-xs font-semibold text-foreground">142</span>
-          </div>
+          </div> */}
         </div>
 
         {/* Clock + Date + RobotMode */}
