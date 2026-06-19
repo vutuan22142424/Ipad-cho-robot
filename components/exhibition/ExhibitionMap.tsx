@@ -71,11 +71,11 @@ const BOOTHS = [
     color: '#ebebe1', icon: '🏪', desc: 'Gian hàng phòng 7',
     overlay: { top: '67.35%', left: '68.91%', width: '21.00%', height: '27.34%' } }, 
 
-  { id: 'R11', name: 'door1', ros_x: 4.56487, ros_y: 7.24993, yaw: 0,
+  { id: 'R11', name: 'GATE1', ros_x: 4.56487, ros_y: 7.24993, yaw: 0,
     color: '#ebebe1', icon: '🏪', desc: 'Gian hàng phòng 7',
     overlay: { top: '50.35%', left: '6.91%', width: '5.00%', height: '10.34%' } },
 
-  { id: 'R12', name: 'door2', ros_x: 49.7373, ros_y: 8.30956, yaw: 3.1459,
+  { id: 'R12', name: 'GATE2', ros_x: 49.7373, ros_y: 8.30956, yaw: 3.1459,
     color: '#ebebe1', icon: '🏪', desc: 'Gian hàng phòng 7',
     overlay: { top: '50.35%', left: '84.91%', width: '5.00%', height: '10.34%' } },   
 ].map(b => ({ ...b, ...rosToDisplay(b.ros_x, b.ros_y, b.yaw) }));

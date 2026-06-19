@@ -5,22 +5,34 @@ import { ExhibitionMap } from '@/components/exhibition/ExhibitionMap';
 import { ChatBot } from '@/components/exhibition/ChatBot';
 import { EventInfo } from '@/components/exhibition/EventInfo';
 import { RobotInventory } from '@/components/exhibition/RobotInventory';
+import { Power } from 'lucide-react';
 
 import { useRobotMQTT, RobotMode } from '@/hooks/useRobotMQTT';
+import { useState, useEffect } from 'react';
 
 const MODE_CONFIG: Record<NonNullable<RobotMode>, { icon: string; cls: string }> = {
-  IDLE:     { icon: '😴', cls: 'text-slate-300' },
-  PAUSED:   { icon: '⏸',  cls: 'text-amber-300' },
-  WAITING:  { icon: '⏳', cls: 'text-blue-300'  },
-  EXECUTING: { icon: '🚀', cls: 'text-green-400' },
-  NAV_BUSY: { icon: '🚀', cls: 'text-green-400' },
-  DOCKING:  { icon: '🔌', cls: 'text-cyan-300'  },
-  RESTING:  { icon: '💤', cls: 'text-indigo-300' },
-  CHARGING: { icon: '⚡', cls: 'text-yellow-300' },
+  IDLE:      { icon: '😴', cls: 'text-slate-300'  },
+  PAUSED:    { icon: '⏸',  cls: 'text-amber-300'  },
+  WAITING:   { icon: '⏳', cls: 'text-blue-300'   },
+  EXECUTING: { icon: '🚀', cls: 'text-green-400'  },
+  NAV_BUSY:  { icon: '🚀', cls: 'text-green-400'  },
+  DOCKING:   { icon: '🔌', cls: 'text-cyan-300'   },
+  RESTING:   { icon: '💤', cls: 'text-indigo-300' },
+  CHARGING:  { icon: '⚡', cls: 'text-yellow-300' },
 };
 
+const FORCE_OFF_EVENTS = ['power_off', 'http_force_off', 'ble_force_off'];
+
 export default function Home() {
-  const { isInteractionPaused, resumeCountdown, robotMode } = useRobotMQTT();
+  const { isInteractionPaused, resumeCountdown, robotMode, lastBleEvent } = useRobotMQTT();
+  const [showForceOffAlert, setShowForceOffAlert] = useState(false);
+
+  useEffect(() => {
+    if (!lastBleEvent) return;
+    if (FORCE_OFF_EVENTS.includes(lastBleEvent.name)) {
+      setShowForceOffAlert(true);
+    }
+  }, [lastBleEvent]);
 
   const modeCfg = robotMode ? MODE_CONFIG[robotMode] : null;
 
@@ -29,28 +41,6 @@ export default function Home() {
       className="h-screen w-full bg-background text-foreground dark overflow-hidden flex flex-col select-none"
       onDragStart={e => e.preventDefault()}
     >
-
-      {/* DEBUG OVERLAY */}
-      {/* <div className="fixed top-120 left-4 z-[9999]">
-        <div className="bg-black/70 text-white px-4 py-2 rounded-xl border border-white/10 backdrop-blur-md text-sm shadow-lg">
-          <div>
-            Pause:
-            <span className={`ml-2 font-bold ${isInteractionPaused ? 'text-red-400' : 'text-green-400'}`}>
-              {isInteractionPaused ? 'YES' : 'NO'}
-            </span>
-          </div>
-          <div>
-            Resume in:
-            <span className="ml-2 font-bold text-cyan-400">{resumeCountdown}s</span>
-          </div>
-          <div>
-            Mode:
-            <span className={`ml-2 font-bold ${modeCfg ? modeCfg.cls : 'text-slate-500'}`}>
-              {modeCfg ? `${modeCfg.icon} ${robotMode}` : '— N/A'}
-            </span>
-          </div>
-        </div>
-      </div> */}
 
       <div className="flex-shrink-0">
         <StatusBar />
@@ -79,6 +69,36 @@ export default function Home() {
 
         </div>
       </div>
+
+      {/* Alert cắt điện khẩn cấp */}
+      {showForceOffAlert && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-[#0d1829] border border-amber-500/20 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mb-4 mx-auto">
+              <Power className="w-6 h-6 text-amber-500" />
+            </div>
+            <h3 className="text-lg font-bold text-white text-center mb-2">
+              Robot bị cắt điện khẩn cấp
+            </h3>
+            <p className="text-slate-400 text-sm text-center mb-1">
+              Nguồn điện đã bị ngắt ngay lập tức.
+            </p>
+            <p className="text-slate-500 text-xs text-center mb-6">
+              Event:{' '}
+              <span className="text-amber-400 font-mono">{lastBleEvent?.name}</span>
+              {' '}· Pin:{' '}
+              <span className="text-amber-400">{lastBleEvent?.soc}%</span>
+            </p>
+            <button
+              onClick={() => setShowForceOffAlert(false)}
+              className="w-full py-3 rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600 transition"
+            >
+              Đã hiểu
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

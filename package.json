@@ -10,11 +10,13 @@
     "android": "next build && npx cap sync android && npx cap open android"
   },
   "dependencies": {
+    "@capacitor-community/bluetooth-le": "^8.2.0",
     "@capacitor-community/speech-recognition": "^7.0.1",
     "@capacitor/android": "^8.4.0",
     "@capacitor/cli": "^8.2.0",
     "@capacitor/core": "^8.2.0",
     "@capacitor/network": "^8.0.1",
+    "@capacitor/preferences": "^8.0.1",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-accordion": "1.2.12",

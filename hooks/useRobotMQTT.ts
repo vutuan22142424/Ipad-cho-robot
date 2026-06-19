@@ -2,6 +2,16 @@ import { useState, useEffect, useCallback } from 'react';
 import mqtt, { MqttClient } from 'mqtt';
 import { Network } from '@capacitor/network';
 import { db } from '@/lib/db';
+import {
+  bleInit,
+  bleConnect,
+  bleSendCommand,
+  isBleConnected,
+  OPCODE,
+  type BleStatusPayload,
+  type BleEventPayload,
+  type PowerState,
+} from '@/lib/ble';
 
 /* ================================
    TYPES
@@ -54,7 +64,6 @@ const listeners = new Set<Listener>(); // danh sách các hàm đó
 
 const globalState = {
   isConnected: false, // Trạng thái kết nối MQTT
-  battery: null as number | null,
   robotStatus: null as string | null,
   robotMode: 'IDLE' as RobotMode,
   pose: null as RobotPosePayload | null,
@@ -65,10 +74,73 @@ const globalState = {
   isManualPaused: false,  // User bấm pause thủ công?
   drawerJamStatus: 'ok' as DrawerJamStatus,
   drawerJamId: null as number | null,
+
+  // ── BLE: nguồn chính cho pin + điều khiển nguồn ──
+  // battery giờ lấy từ BLE (soc), không còn lấy từ MQTT robot/battery/soc nữa.
+  battery: null as number | null,
+  bleConnected: false,
+  powerState: null as PowerState | null, // 0=OFF 1=ON 2=WAIT_PI 3=POST_ACK
+  bleStatus: null as BleStatusPayload | null,
+  lastBleEvent: null as BleEventPayload | null,
+  powerCommandPending: false, // đang chờ phản hồi sau khi gửi lệnh ON/OFF
 };
 
 function notifyAll() {
   listeners.forEach(listener => listener()); // yêu cầu render lại các phần tử trong listener
+}
+
+/* ================================
+   BLE INIT
+================================ */
+
+let bleInitialized = false;
+
+async function initBLE() {
+  if (bleInitialized) return;
+  bleInitialized = true;
+
+  try {
+    await bleInit();
+    await bleConnect(
+      // onStatus
+      (status: BleStatusPayload) => {
+        globalState.battery = status.soc;
+        globalState.powerState = status.powerState;
+        globalState.bleStatus = status;
+        globalState.bleConnected = true;
+        // Có status mới về tức là lệnh ON/OFF trước đó (nếu có) đã có phản
+        // hồi rõ ràng từ phần cứng — không cần giữ "pending" nữa.
+        globalState.powerCommandPending = false;
+        notifyAll();
+      },
+      // onEvent
+      (event: BleEventPayload) => {
+        globalState.lastBleEvent = event;
+        globalState.powerCommandPending = false;
+
+        if (event.name === 'ble_cmd_rejected') {
+          console.error('🚫 BLE: lệnh bị từ chối — auth token sai, kiểm tra lại AUTH_TOKEN trong lib/ble.ts khớp với firmware');
+        } else {
+          console.log(`🔔 BLE event: ${event.name} (soc=${event.soc}%, uptime=${event.uptimeS}s)`);
+        }
+        notifyAll();
+      },
+      // onDisconnected
+      () => {
+        globalState.bleConnected = false;
+        console.warn('🔌 BLE: ESP32 đã ngắt kết nối');
+        notifyAll();
+      },
+    );
+
+    globalState.bleConnected = true;
+    notifyAll();
+    console.log('⚡ BLE Connected tới ESP32 PowerSwitch');
+  } catch (err) {
+    globalState.bleConnected = false;
+    console.error('❌ BLE init/connect lỗi:', err);
+    notifyAll();
+  }
 }
 
 /* ================================
@@ -80,8 +152,8 @@ async function initMQTT() {
   isInitialized = true;
   // const brokerUrl = process.env.NEXT_PUBLIC_MQTT_BROKER 
   // ?? 'wss://b85b204370d243129a46f5b35f9db2a9.s1.eu.hivemq.cloud:8884/mqtt';
-  const brokerUrl = 'ws://localhost:9001';
-  // const brokerUrl = 'ws://192.168.4.1:9001'; // pi5
+  // const brokerUrl = 'ws://localhost:9001';
+  const brokerUrl = 'ws://192.168.4.1:9001'; // pi5
   //  const brokerUrl = 'ws://172.24.36.100:9001';
 client = mqtt.connect(brokerUrl, {
       username: process.env.NEXT_PUBLIC_MQTT_USER ?? 'Tuandang',
@@ -108,7 +180,7 @@ client = mqtt.connect(brokerUrl, {
     notifyAll();
 
     const topics = [
-      'robot/battery/soc',
+      'robot/battery/soc', // không còn dùng để hiển thị (xem §BLE), giữ subscribe phòng khi cần đối chiếu/debug
       'robot/state/state', // docking,charging
       'robot/state/pose',
       'robot/state/service_feedback', // succeeded
@@ -129,8 +201,9 @@ client = mqtt.connect(brokerUrl, {
       let parsedPayload: any;
 
       if (topic === 'robot/battery/soc') {
-        const batteryValue = parseFloat(payload); // "85.5" => 85.5
-        if (!isNaN(batteryValue)) globalState.battery = batteryValue;
+        // Pin giờ lấy từ BLE (xem initBLE/onStatus). Giữ lại parse ở đây
+        // chỉ để log/đối chiếu khi cần debug, KHÔNG ghi vào globalState.battery nữa.
+        const batteryValue = parseFloat(payload);
         parsedPayload = batteryValue;
       }
 
@@ -336,6 +409,7 @@ export const useRobotMQTT = () => {
 
   useEffect(() => {
     initMQTT();
+    initBLE(); // BLE chạy song song với MQTT, kết nối ngay từ đầu (không chờ MQTT lỗi mới kết nối)
     initInteractionPause(); // 2. Kích hoạt tính năng tự động Pause khi user chạm màn hình
 
     const listener = () => forceUpdate({});
@@ -370,6 +444,35 @@ export const useRobotMQTT = () => {
     []
   );
 
+  /**
+   * Gửi lệnh đóng/mở nguồn qua BLE (không qua MQTT — đây là mục đích chính
+   * của BLE: hoạt động được cả khi mất mạng/WiFi tới Pi5).
+   * Toggle thông minh: tự dựa vào powerState hiện tại để quyết định gửi
+   * opcode ON hay SHUTDOWN. Nếu chưa biết powerState (null, chưa có status
+   * lần nào), mặc định coi là đang OFF → gửi lệnh ON.
+   */
+  const togglePower = useCallback(async () => {
+    if (!isBleConnected()) {
+      console.warn('⚠️ BLE chưa kết nối — không thể gửi lệnh nguồn');
+      return;
+    }
+
+    const currentlyOn = globalState.powerState === 1; // 1 = ON
+    const opcode = currentlyOn ? OPCODE.SHUTDOWN : OPCODE.ON;
+
+    globalState.powerCommandPending = true;
+    notifyAll();
+
+    try {
+      await bleSendCommand(opcode);
+      console.log(`📤 BLE: đã gửi lệnh ${currentlyOn ? 'SHUTDOWN' : 'ON'}, chờ event/status phản hồi...`);
+    } catch (err) {
+      globalState.powerCommandPending = false;
+      console.error('❌ BLE gửi lệnh nguồn lỗi:', err);
+      notifyAll();
+    }
+  }, []);
+
   return {
     isConnected: globalState.isConnected,
     battery: globalState.battery,
@@ -382,6 +485,14 @@ export const useRobotMQTT = () => {
     drawerJamStatus: globalState.drawerJamStatus,
     drawerJamId: globalState.drawerJamId,
     publishCommand,
+
+    // BLE / Power
+    bleConnected: globalState.bleConnected,
+    powerState: globalState.powerState,
+    bleStatus: globalState.bleStatus,
+    lastBleEvent: globalState.lastBleEvent,
+    powerCommandPending: globalState.powerCommandPending,
+    togglePower,
   };
 };
 
@@ -450,3 +561,4 @@ export function getRobotMode() {
 export function getDrawerOpen() {
   return globalState.drawerOpen;
 }
+
