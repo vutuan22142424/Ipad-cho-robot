@@ -127,6 +127,7 @@ export interface ChatMessage {
    ═══════════════════════════════════════════════════════ */
 
 // const GEMINI_MODEL = 'gemini-2.5-flash';
+// const GEMINI_MODEL = 'gemini-3.1-flash-tts-preview';
 const GEMINI_MODEL = 'gemini-3.1-flash-lite';
 // Rate limit cooldown sau khi bị 429
 let rateLimitUntil = 0;

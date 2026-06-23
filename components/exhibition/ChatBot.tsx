@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Mic, MicOff, X, Volume2 } from 'lucide-react';
+import { Send, Mic, MicOff, X, Volume2, VolumeX } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -73,6 +73,7 @@ function VoiceOverlay({ onClose, onResult }: { onClose: () => void; onResult: (t
   const mountedRef = useRef(true);
   const cleanupRef = useRef<(() => void) | null>(null);
   const displayTextRef = useRef('');
+
 
   useEffect(() => { displayTextRef.current = displayText; }, [displayText]);
 
@@ -278,6 +279,81 @@ function VoiceOverlay({ onClose, onResult }: { onClose: () => void; onResult: (t
     </div>
   );
 }
+/* ═══════════════════════════════════════════════════════
+   TEXT-TO-SPEECH — sửa triệt để lỗi mảng rỗng []
+   ═══════════════════════════════════════════════════════ */
+
+function stripMarkdownForSpeech(text: string): string {
+  return text
+    .replace(/[*_`#~]/g, '')
+    .replace(/\n+/g, '. ')
+    .replace(/https?:\/\/\S+/g, '')
+    .trim();
+}
+
+// 1. Hàm lấy danh sách giọng nói trực tiếp, không phụ thuộc hoàn toàn vào sự kiện thay đổi
+function getVietnameseVoice(): SpeechSynthesisVoice | null {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return null;
+
+  // Lấy trực tiếp danh sách mới nhất ngay tại thời điểm gọi
+  const allVoices = window.speechSynthesis.getVoices();
+  
+  if (!allVoices || allVoices.length === 0) {
+    console.log("SpeechSynthesis hệ thống đang tải ngầm hoặc chưa sẵn sàng.");
+    return null;
+  }
+
+  // Lọc tìm giọng đọc tiếng Việt
+  return allVoices.find(v => v.lang === 'vi-VN')
+      || allVoices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith('vi'))
+      || null;
+}
+
+export function speakText(text: string, enabled: boolean) {
+  if (!enabled) return;
+  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+  try {
+    window.speechSynthesis.cancel(); // Tắt toàn bộ âm thanh đang đọc dở trước đó
+    
+    const clean = stripMarkdownForSpeech(text);
+    if (!clean) return;
+
+    const utter = new SpeechSynthesisUtterance(clean);
+    
+    // Gọi trực tiếp để lấy dữ liệu realtime của hệ thống
+    const viVoice = getVietnameseVoice();
+
+    if (viVoice) {
+      utter.voice = viVoice;     // Ép đúng giọng Việt tìm thấy (Ví dụ: Microsoft An hoặc Google tiếng Việt)
+      utter.lang = viVoice.lang;
+      console.log("🎯 Thành công! Đang đọc bằng giọng:", viVoice.name);
+    } else {
+      utter.lang = 'vi-VN';      // Fallback nếu danh sách rỗng, trình duyệt tự đoán giọng gần nhất
+      console.log("⚠️ Danh sách rỗng, đang ép cấu hình fallback lang='vi-VN'");
+    }
+
+    utter.rate = 1;
+    utter.pitch = 1;
+    
+    // Bẫy bắt lỗi nếu bị bảo mật trình duyệt chặn quyền tự động phát (Autoplay)
+    utter.onerror = (e) => {
+      if (e.error === 'not-allowed') {
+        console.warn("Trình duyệt chặn autoplay! Cần click tương tác với Web trước.");
+      } else {
+        console.error("Lỗi SpeechSynthesis:", e.error);
+      }
+    };
+
+    window.speechSynthesis.speak(utter);
+  } catch (err) {
+    console.error("Lỗi hệ thống TTS:", err);
+  }
+}
+
+export function stopSpeaking() {
+  try { window.speechSynthesis?.cancel(); } catch {}
+}
 
 /* ═══════════════════════════════════════════════════════
    MAIN CHATBOT COMPONENT
@@ -296,10 +372,11 @@ export function ChatBot() {
   const [streamingId, setStreamingId]   = useState<string | null>(null);
   const [showVoice, setShowVoice]       = useState(false);
   const [isExpanded, setIsExpanded]     = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true); // mặc định tự động đọc
   const messagesEndRef                  = useRef<HTMLDivElement>(null);
   const isBusy                          = isTyping || streamingId !== null;
 
-  useEffect(() => {
+useEffect(() => {
     if (isExpanded) {
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     }
@@ -308,6 +385,7 @@ export function ChatBot() {
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isBusy) return;
     const trimmed = text.trim();
+    stopSpeaking(); // 👈 THÊM — dừng giọng đọc cũ trước khi xử lý câu hỏi mới
     const userMsg: Message = { id: Date.now().toString(), type: 'user', text: trimmed };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
@@ -334,7 +412,11 @@ export function ChatBot() {
 
       if (firstChunk) {
         setIsTyping(false);
-        setMessages(prev => [...prev, { id: aId, type: 'assistant', text: 'Xin lỗi, tôi không thể trả lời lúc này. Bạn thử lại nhé! 😊' }]);
+        const noReplyMsg = 'Xin lỗi, tôi không thể trả lời lúc này. Bạn thử lại nhé! 😊'; // 👈 THÊM — gán ra biến để dùng lại cho speakText
+        setMessages(prev => [...prev, { id: aId, type: 'assistant', text: noReplyMsg }]);
+        speakText(noReplyMsg, voiceEnabled); // 👈 THÊM
+      } else {
+        speakText(accumulated, voiceEnabled); // 👈 THÊM — đọc câu trả lời sau khi stream xong
       }
       setStreamingId(null);
     } catch {
@@ -346,8 +428,9 @@ export function ChatBot() {
         if (existing) return prev.map(m => m.id === aId ? { ...m, text: fallback } : m);
         return [...prev, { id: aId, type: 'assistant', text: fallback }];
       });
+      speakText(fallback, voiceEnabled); // 👈 THÊM — đọc câu fallback
     }
-  }, [isBusy, messages]);
+  }, [isBusy, messages, voiceEnabled]); // 👈 THÊM voiceEnabled vào dependency array
 
   const handleVoiceResult = useCallback((text: string) => {
     if (!isExpanded) setIsExpanded(true);
@@ -443,11 +526,21 @@ export function ChatBot() {
                   </div>
                 </div>
               </div>
-              <button onClick={() => setIsExpanded(false)}
-                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
-                style={{ background: 'rgba(255,255,255,0.05)' }}>
-                <X className="w-3.5 h-3.5 text-slate-400" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => { setVoiceEnabled(v => !v); stopSpeaking(); }}
+                  className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
+                  style={{ background: 'rgba(255,255,255,0.05)' }}>
+                  {voiceEnabled
+                    ? <Volume2 className="w-3.5 h-3.5 text-orange-400" />
+                    : <VolumeX className="w-3.5 h-3.5 text-slate-500" />}
+                    </button>
+                    <button onClick={() => setIsExpanded(false)}
+                  className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
+                  style={{ background: 'rgba(255,255,255,0.05)' }}>
+                  <X className="w-3.5 h-3.5 text-slate-400" />
+                </button>
+              </div>
             </div>
 
             {/* Messages */}

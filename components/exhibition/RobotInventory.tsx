@@ -57,7 +57,7 @@ export function RobotInventory() {
         if (getInteractedAfterDrawer()) return;
         publishCommand('robot/cmd/resume', {});
         console.log(`✅ Drawer ${drawerId} đóng → không tương tác, resume sau 5s`);
-      }, 5000);
+      }, 15000);
     }
   }, [publishCommand]); // bên trong sài hàm gì thì ghi lại, ko đổi tên
 

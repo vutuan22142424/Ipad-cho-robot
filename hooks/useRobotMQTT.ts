@@ -83,6 +83,7 @@ const globalState = {
   bleStatus: null as BleStatusPayload | null,
   lastBleEvent: null as BleEventPayload | null,
   powerCommandPending: false, // đang chờ phản hồi sau khi gửi lệnh ON/OFF
+   isLocked: false,  // ← NEW: đang chờ chạm lần 2
 };
 
 function notifyAll() {
@@ -335,12 +336,12 @@ let resumeTimeout: NodeJS.Timeout;
 let countdownInterval: NodeJS.Timeout;
 let isPaused = false;
 let interactedAfterDrawer = false;
-let isNavigating = false;  // đang ở màn hình navigation?
+let isNavigating = false;
 
 function startResumeTimer() {
-  clearTimeout(resumeTimeout);  // hủy timer cũ nếu có
-  clearInterval(countdownInterval); // hủy đếm ngược 
-  globalState.resumeCountdown = 10;
+  clearTimeout(resumeTimeout);
+  clearInterval(countdownInterval);
+  globalState.resumeCountdown = 30;
   notifyAll();
 
   countdownInterval = setInterval(() => {
@@ -349,55 +350,60 @@ function startResumeTimer() {
     if (globalState.resumeCountdown <= 0) clearInterval(countdownInterval);
   }, 1000);
 
-  resumeTimeout = setTimeout(() => {
-    if (!client || !client.connected) return;        // tên_biến = setTimeout(() => {// Các câu lệnh sẽ được thực thi khi HẾT GIỜ}, thời_gian_chờ_mili_giây);
-    if (globalState.isManualPaused) return;
-    isPaused = false;
-    globalState.isInteractionPaused = false;
-    globalState.resumeCountdown = 0;
-    clearInterval(countdownInterval);
-    notifyAll();
+resumeTimeout = setTimeout(() => {
+  if (!client || !client.connected) return;
+  if (globalState.isManualPaused) return;
 
-    if (globalState.drawerOpen) {
-      console.log('⏸ Timer 10s hết, ngăn vẫn mở → chờ Pi5 gửi CLOSED');
-      return;
-    }
+  isPaused = false;
+  globalState.isInteractionPaused = false;
+  globalState.resumeCountdown = 0;
+  clearInterval(countdownInterval);
 
-    client.publish('robot/cmd/resume', JSON.stringify({}));
+  if (globalState.drawerOpen) {
+    console.log('⏸ Timer 30s hết, ngăn vẫn mở → chờ Pi5 gửi CLOSED');
     notifyAll();
-    console.log('▶️ AUTO RESUME sau 10s');
-  }, 10000);
+    return;
+  }
+
+  client.publish('robot/cmd/resume', JSON.stringify({}));
+  globalState.isLocked = true; // ← giữ nguyên: lock lại sau khi tự resume
+  notifyAll();
+  console.log('▶️ AUTO RESUME sau 30s → lock lại');
+}, 30000);
 }
 
 function initInteractionPause() {
   if (interactionInitialized) return;
   interactionInitialized = true;
 
-  const handleInteraction = (e: MouseEvent | TouchEvent) => {
-    if (!client || !client.connected) return;
-    if (isNavigating) return;
+    const handleInteraction = (e: MouseEvent | TouchEvent) => {
+      if (!client || !client.connected) return;
+      // if (isNavigating) return;
 
-    const mode = globalState.robotMode;
-    if (mode !== 'WAITING' && mode !== 'EXECUTING'&& mode !== 'NAV_BUSY') return;
+      // Đang lock → chạm này là lần đầu: unlock
+      if (globalState.isLocked) {
+        globalState.isLocked = false;
+        notifyAll();
+        console.log('🔓 UNLOCK');
+      }
 
-    const target = e.target as HTMLElement;  // không pause khi nhấn button
-    if (target.closest('button')) return;
+      // AutoPause: chỉ pause nếu robot đang ở trạng thái hoạt động (đang chạy/chờ)
+      const mode = globalState.robotMode;
+      const shouldPause = mode === 'WAITING' || mode === 'EXECUTING' || mode === 'NAV_BUSY';
 
-    interactedAfterDrawer = true;
+      if (shouldPause) {
+        if (!isPaused) {
+          isPaused = true;
+          globalState.isInteractionPaused = true;
+          client.publish('robot/cmd/pause', JSON.stringify({}));
+          console.log('🛑 AUTO PAUSE');
+        }
+        startResumeTimer(); // reset lại 30s mỗi lần chạm trong khi robot đang pause
+      }
+    };
 
-    if (!isPaused) {  // nếu đã pause rồi thì thôi 
-      isPaused = true;
-      globalState.isInteractionPaused = true;
-      client.publish('robot/cmd/pause', JSON.stringify({}));
-      console.log('🛑 AUTO PAUSE');
-    }
-
-    startResumeTimer();
-  };
-
-  window.addEventListener('touchstart', handleInteraction, { passive: true });
-  window.addEventListener('mousedown', handleInteraction, { passive: true });
-  //window.addEventListener(tên_sự_kiện, hàm_xử_lý, options)
+  window.addEventListener('touchstart', handleInteraction);
+  window.addEventListener('mousedown', handleInteraction);
 }
 
 /* ================================
@@ -484,6 +490,7 @@ export const useRobotMQTT = () => {
     resumeCountdown: globalState.resumeCountdown,
     drawerJamStatus: globalState.drawerJamStatus,
     drawerJamId: globalState.drawerJamId,
+     isLocked: globalState.isLocked, // ← NEW
     publishCommand,
 
     // BLE / Power
@@ -562,3 +569,14 @@ export function getDrawerOpen() {
   return globalState.drawerOpen;
 }
 
+export function lockScreen() {
+  globalState.isLocked = true;
+  notifyAll();
+  console.log('🔒 lockScreen');
+}
+
+export function resetLock() {
+  globalState.isLocked = false;
+  notifyAll();
+  console.log('🔓 resetLock');
+}

@@ -24,7 +24,7 @@ const MODE_CONFIG: Record<NonNullable<RobotMode>, { icon: string; cls: string }>
 const FORCE_OFF_EVENTS = ['power_off', 'http_force_off', 'ble_force_off'];
 
 export default function Home() {
-  const { isInteractionPaused, resumeCountdown, robotMode, lastBleEvent } = useRobotMQTT();
+  const { isInteractionPaused, resumeCountdown, robotMode, lastBleEvent, isLocked } = useRobotMQTT();
   const [showForceOffAlert, setShowForceOffAlert] = useState(false);
 
   useEffect(() => {
@@ -69,7 +69,19 @@ export default function Home() {
 
         </div>
       </div>
-
+              {isLocked && (
+          <div 
+            className="fixed inset-0 z-[50] cursor-pointer"
+            // overlay trong suốt — chặn mọi click bên dưới
+            // chạm vào đây = lần 2 → handleInteraction tự unlock
+          />
+        )}
+        {isLocked && (
+            <div className="fixed inset-0 z-[50] cursor-pointer flex items-center justify-center">
+              {/* Overlay trong suốt chặn mọi click */}
+              
+            </div>
+          )}
       {/* Alert cắt điện khẩn cấp */}
       {showForceOffAlert && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
