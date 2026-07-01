@@ -2,11 +2,11 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Mic, MicOff, X, Volume2, VolumeX } from 'lucide-react';
-import { Capacitor } from '@capacitor/core';
+// import { Capacitor } from '@capacitor/core';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { streamChat, getFallbackResponse, type ChatMessage } from '@/lib/chatService';
-
+// import { TextToSpeech } from '@capacitor-community/text-to-speech';
 /* ═══════════════════════════════════════════════════════
    TYPES
    ═══════════════════════════════════════════════════════ */
@@ -53,8 +53,14 @@ function TypingIndicator() {
    VOICE OVERLAY
    ═══════════════════════════════════════════════════════ */
 
-function isCapacitorNative(): boolean {    // đang chạy trên app Android/iOS?
-  try { return Capacitor.isNativePlatform(); } catch { return false; }
+async function isCapacitorNative(): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  try {
+    const { Capacitor } = await import('@capacitor/core');
+    return Capacitor.isNativePlatform();
+  } catch {
+    return false;
+  }
 }
 
 function hasWebSpeechAPI(): boolean { // browser có hỗ trợ nhận dạng giọng nói?
@@ -201,12 +207,18 @@ function VoiceOverlay({ onClose, onResult }: { onClose: () => void; onResult: (t
           }
         }, [onClose, stopAndSend]);
 
-  useEffect(() => {
-    mountedRef.current = true;
-    const dotTimer = setInterval(() => { if (mountedRef.current) setDots(d => (d + 1) % 4); }, 500);
-    if (isCapacitorNative()) startCapacitorRecognition(); else startWebRecognition();
-    return () => { mountedRef.current = false; clearInterval(dotTimer); try { cleanupRef.current?.(); } catch {} };
-  }, []);
+useEffect(() => {
+  mountedRef.current = true;
+  const dotTimer = setInterval(() => { if (mountedRef.current) setDots(d => (d + 1) % 4); }, 500);
+
+  (async () => {
+    const native = await isCapacitorNative();
+    if (!mountedRef.current) return;   // ← thêm guard, tránh set state sau khi unmount
+    if (native) startCapacitorRecognition(); else startWebRecognition();
+  })();
+
+  return () => { mountedRef.current = false; clearInterval(dotTimer); try { cleanupRef.current?.(); } catch {} };
+}, []);
 
   const isListening = status === 'listening';
 
@@ -291,70 +303,80 @@ function stripMarkdownForSpeech(text: string): string {
     .trim();
 }
 
-// 1. Hàm lấy danh sách giọng nói trực tiếp, không phụ thuộc hoàn toàn vào sự kiện thay đổi
 function getVietnameseVoice(): SpeechSynthesisVoice | null {
   if (typeof window === 'undefined' || !window.speechSynthesis) return null;
-
-  // Lấy trực tiếp danh sách mới nhất ngay tại thời điểm gọi
   const allVoices = window.speechSynthesis.getVoices();
-  
-  if (!allVoices || allVoices.length === 0) {
-    console.log("SpeechSynthesis hệ thống đang tải ngầm hoặc chưa sẵn sàng.");
-    return null;
-  }
-
-  // Lọc tìm giọng đọc tiếng Việt
+  if (!allVoices || allVoices.length === 0) return null;
   return allVoices.find(v => v.lang === 'vi-VN')
       || allVoices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith('vi'))
       || null;
 }
 
-export function speakText(text: string, enabled: boolean) {
+export async function speakText(text: string, enabled: boolean) {
   if (!enabled) return;
-  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+  if (typeof window === 'undefined') return;   // ← chặn sớm khi chạy ở server
+
+  const clean = stripMarkdownForSpeech(text);
+  if (!clean) return;
 
   try {
-    window.speechSynthesis.cancel(); // Tắt toàn bộ âm thanh đang đọc dở trước đó
-    
-    const clean = stripMarkdownForSpeech(text);
-    if (!clean) return;
+    const { Capacitor } = await import('@capacitor/core');
 
-    const utter = new SpeechSynthesisUtterance(clean);
-    
-    // Gọi trực tiếp để lấy dữ liệu realtime của hệ thống
-    const viVoice = getVietnameseVoice();
-
-    if (viVoice) {
-      utter.voice = viVoice;     // Ép đúng giọng Việt tìm thấy (Ví dụ: Microsoft An hoặc Google tiếng Việt)
-      utter.lang = viVoice.lang;
-      console.log("🎯 Thành công! Đang đọc bằng giọng:", viVoice.name);
-    } else {
-      utter.lang = 'vi-VN';      // Fallback nếu danh sách rỗng, trình duyệt tự đoán giọng gần nhất
-      console.log("⚠️ Danh sách rỗng, đang ép cấu hình fallback lang='vi-VN'");
+    if (Capacitor.isNativePlatform()) {
+      const { TextToSpeech } = await import('@capacitor-community/text-to-speech');
+      try {
+        await TextToSpeech.stop();
+        await TextToSpeech.speak({
+          text: clean,
+          lang: 'vi-VN',
+          rate: 1.0,
+          pitch: 1.0,
+          volume: 1.0,
+          category: 'playback',
+        });
+        console.log('🎯 TTS native: đã gửi lệnh đọc');
+      } catch (err) {
+        console.error('❌ TTS native lỗi:', err);
+      }
+      return;
     }
+  } catch {
+    // không có Capacitor (chạy web thuần) → rơi xuống nhánh web bên dưới
+  }
 
+  // ── Web browser ──
+  if (!window.speechSynthesis) return;
+  try {
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(clean);
+    const viVoice = getVietnameseVoice();
+    if (viVoice) {
+      utter.voice = viVoice;
+      utter.lang = viVoice.lang;
+    } else {
+      utter.lang = 'vi-VN';
+    }
     utter.rate = 1;
     utter.pitch = 1;
-    
-    // Bẫy bắt lỗi nếu bị bảo mật trình duyệt chặn quyền tự động phát (Autoplay)
-    utter.onerror = (e) => {
-      if (e.error === 'not-allowed') {
-        console.warn("Trình duyệt chặn autoplay! Cần click tương tác với Web trước.");
-      } else {
-        console.error("Lỗi SpeechSynthesis:", e.error);
-      }
-    };
-
+    utter.onerror = (e) => console.error('Lỗi SpeechSynthesis:', e.error);
     window.speechSynthesis.speak(utter);
   } catch (err) {
-    console.error("Lỗi hệ thống TTS:", err);
+    console.error('Lỗi hệ thống TTS (web):', err);
   }
 }
 
-export function stopSpeaking() {
+export async function stopSpeaking() {
+  if (typeof window === 'undefined') return;
+  try {
+    const { Capacitor } = await import('@capacitor/core');
+    if (Capacitor.isNativePlatform()) {
+      const { TextToSpeech } = await import('@capacitor-community/text-to-speech');
+      try { await TextToSpeech.stop(); } catch {}
+      return;
+    }
+  } catch {}
   try { window.speechSynthesis?.cancel(); } catch {}
 }
-
 /* ═══════════════════════════════════════════════════════
    MAIN CHATBOT COMPONENT
    ═══════════════════════════════════════════════════════ */

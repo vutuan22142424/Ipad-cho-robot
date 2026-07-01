@@ -73,7 +73,7 @@ export const OPCODE = {
 ================================ */
 
 export function parseStatus(v: DataView): BleStatusPayload {
-  const flags = v.getUint8(12);
+  const flags = v.getUint8(12); // giải các thông số của esp gửi , vì nó gửi 1 dãy 18bit
   return {
     soc: v.getUint8(0),
     voltageV: v.getUint16(1, true) / 1000,
@@ -100,7 +100,7 @@ export function parseEvent(v: DataView): BleEventPayload {
 }
 
 /* ================================
-   CONNECTION LIFECYCLE
+   CONNECTION LIFECYCLE // để lưu ble lại nếu trước đó đã kết nối 1 lần rồi
 ================================ */
 
 let connectedId: string | null = null;

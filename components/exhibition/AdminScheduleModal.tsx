@@ -99,7 +99,7 @@ export function AdminScheduleModal({ schedule, onClose, onSave }: Props) {
                   </div>
                 </div>
 
-                {isEditing ? (
+                {isEditing ? ( // bảng edit
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <label className="block text-xs font-medium text-slate-500 mb-1">Thời gian Bắt đầu</label>

@@ -41,9 +41,9 @@ export default function Home() {
       className="h-screen w-full bg-background text-foreground dark overflow-hidden flex flex-col select-none"
       onDragStart={e => e.preventDefault()}
     >
-
-      <div className="flex-shrink-0">
-        <StatusBar />
+      
+      <div className="flex-shrink-0"> 
+        <StatusBar /> 
       </div>
 
       <div className="px-4 py-4 flex-1 min-h-0">

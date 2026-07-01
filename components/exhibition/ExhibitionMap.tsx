@@ -610,7 +610,7 @@ export function ExhibitionMap() {
             timeout_sec: isLast ? 60 : 10,
             return_to_patrol: false,
             priority: 5,
-            speed_limit_ms: 0.5,
+            speed_limit_ms: 0.3,
           },
         });
       }, idx * 150);
